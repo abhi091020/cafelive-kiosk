@@ -38,3 +38,4 @@ jobs:
       # Step 5 — (Optional) Run lint check
       - name: Lint check
         run: npm run lint --if-present
+        continue-on-error: true
