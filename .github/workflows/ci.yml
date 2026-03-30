@@ -1,0 +1,40 @@
+# .github/workflows/ci.yml
+# Runs automatically on every push and pull request to main branch.
+# Checks that the React build succeeds — catches broken code before it causes issues.
+
+name: CafeLive CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build:
+    name: Build & Check
+    runs-on: ubuntu-latest
+
+    steps:
+      # Step 1 — Checkout your code
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # Step 2 — Setup Node.js
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: "npm"
+
+      # Step 3 — Install dependencies
+      - name: Install dependencies
+        run: npm ci
+
+      # Step 4 — Build the React app (Vite)
+      - name: Build project
+        run: npm run build
+
+      # Step 5 — (Optional) Run lint check
+      - name: Lint check
+        run: npm run lint --if-present
