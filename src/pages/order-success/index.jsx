@@ -9,6 +9,7 @@
 
 import { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { Header, Footer } from "@common";
 import orderCompleteImg from "@assets/ordersuccess2.png";
 
@@ -56,19 +57,22 @@ const generateConfetti = (count = 60) =>
 const OrderSuccessPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { t } = useTranslation();
+
   const items = location.state?.items || [];
 
   const [countdown, setCountdown] = useState(5);
   const [confetti] = useState(() => generateConfetti(70));
 
   // ── Countdown → redirect ────────────────────────────────────────────────
+  // NOTE: timer renamed to avoid shadowing `t` from useTranslation
   useEffect(() => {
     if (countdown <= 0) {
       navigate("/");
       return;
     }
-    const t = setTimeout(() => setCountdown((c) => c - 1), 1000);
-    return () => clearTimeout(t);
+    const timer = setTimeout(() => setCountdown((c) => c - 1), 1000);
+    return () => clearTimeout(timer);
   }, [countdown, navigate]);
 
   return (
@@ -149,7 +153,7 @@ const OrderSuccessPage = () => {
           <h1
             style={{
               position: "absolute",
-              bottom: "6%" /* ← adjust this to move text up or down */,
+              bottom: "6%",
               left: 0,
               right: 0,
               margin: 0,
@@ -164,13 +168,13 @@ const OrderSuccessPage = () => {
               animation: "fadeUp 0.5s 0.25s ease both",
             }}
           >
-            Order Completed
+            {t("order.orderSuccess")}
             <br />
-            Successfully !
+            {t("order.orderComplete")}
           </h1>
         </div>
 
-        {/* Countdown */}
+        {/* ── Countdown ─────────────────────────────────────────────────── */}
         <p
           style={{
             margin: 0,
@@ -180,21 +184,7 @@ const OrderSuccessPage = () => {
             zIndex: 1,
           }}
         >
-          Redirecting in{" "}
-          <span
-            style={{
-              color: "#B91C1C",
-              fontWeight: 700,
-              fontSize: "1.2rem",
-              display: "inline-block",
-              animation: "countPulse 1s ease infinite",
-              minWidth: "22px",
-              textAlign: "center",
-            }}
-          >
-            {countdown}
-          </span>{" "}
-          seconds…
+          {t("order.redirecting", { seconds: countdown })}
         </p>
       </div>
 

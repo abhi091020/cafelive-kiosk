@@ -4,20 +4,30 @@
 // Usage:
 //   <ConfirmDialog
 //     visible={showDialog}
-//     message="Would you like to add more items?"
-//     onYes={() => { setShowDialog(false); /* stay on page */ }}
+//     message={t("menu.addMoreMessage")}
+//     yesLabel={t("general.yes")}
+//     noLabel={t("general.no")}
+//     onYes={() => { setShowDialog(false); }}
 //     onNo={() => { setShowDialog(false); navigate("/order-success", ...); }}
 //   />
 
+import { useTranslation } from "react-i18next";
+
 const ConfirmDialog = ({
   visible = false,
-  message = "Are you sure?",
-  yesLabel = "Yes",
-  noLabel = "No",
+  message,
+  yesLabel,
+  noLabel,
   onYes,
   onNo,
 }) => {
+  const { t } = useTranslation();
   if (!visible) return null;
+
+  // Fall back to translated defaults if labels not passed by parent
+  const resolvedYes = yesLabel ?? t("general.yes");
+  const resolvedNo  = noLabel  ?? t("general.no");
+  const resolvedMsg = message  ?? t("general.confirm");
 
   const activeGradient = "linear-gradient(90deg, #EA4D4E 0%, #B91C1C 100%)";
 
@@ -62,7 +72,7 @@ const ConfirmDialog = ({
             lineHeight: 1.35,
           }}
         >
-          {message}
+          {resolvedMsg}
         </p>
 
         {/* ── Buttons ──────────────────────────────────────────────────── */}
@@ -101,7 +111,7 @@ const ConfirmDialog = ({
               e.currentTarget.style.backgroundColor = "#FFFFFF";
             }}
           >
-            {yesLabel}
+            {resolvedYes}
           </button>
 
           {/* No — filled red */}
@@ -133,7 +143,7 @@ const ConfirmDialog = ({
               e.currentTarget.style.background = activeGradient;
             }}
           >
-            {noLabel}
+            {resolvedNo}
           </button>
         </div>
       </div>

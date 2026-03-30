@@ -1,10 +1,12 @@
 // src/components/feedback/FeedbackButtons.jsx
 
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { ROUTES } from "@router/AppRouter";
 
 const FeedbackButtons = () => {
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   const buttonStyle = {
     width: "100%",
@@ -55,7 +57,7 @@ const FeedbackButtons = () => {
         onPointerUp={handlePointerUp}
         onPointerLeave={handlePointerUp}
       >
-        Food Feedback
+        {t("feedback.foodFeedback")}
       </button>
 
       {/* Overall Feedback Button */}
@@ -66,7 +68,7 @@ const FeedbackButtons = () => {
         onPointerUp={handlePointerUp}
         onPointerLeave={handlePointerUp}
       >
-        Overall Feedback
+        {t("feedback.overallFeedback")}
       </button>
     </div>
   );

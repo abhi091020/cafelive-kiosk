@@ -16,6 +16,7 @@ import {
   BulkOrderActions,
 } from "@components/bulk-booking";
 import { useUser } from "@context/UserContext";
+import { useTranslation } from "react-i18next";
 import usePrint from "@hooks/usePrint";
 import { createAndPrintTicket } from "@services/print/printService";
 
@@ -34,6 +35,7 @@ const bounceStyle = `
 `;
 
 const ShiftAlertDialog = ({ visible, onClose }) => {
+  const { t } = useTranslation();
   if (!visible) return null;
   return (
     <div
@@ -93,7 +95,7 @@ const ShiftAlertDialog = ({ visible, onClose }) => {
             textAlign: "center",
           }}
         >
-          Please Select a Shift
+          {t("shift.pleaseSelectShift")}
         </p>
         <p
           style={{
@@ -103,7 +105,7 @@ const ShiftAlertDialog = ({ visible, onClose }) => {
             textAlign: "center",
           }}
         >
-          You must select your shift before booking a meal.
+          {t("shift.mustSelectShift")}
         </p>
         <button
           onClick={onClose}
@@ -120,7 +122,7 @@ const ShiftAlertDialog = ({ visible, onClose }) => {
             boxShadow: "0 4px 14px rgba(234,77,78,0.35)",
           }}
         >
-          OK, Got it
+          {t("shift.okGotIt")}
         </button>
       </div>
     </div>
@@ -132,6 +134,7 @@ const BulkBookingPage = () => {
   const scrollRef = useRef(null);
   const { user } = useUser();
   const { print } = usePrint();
+  const { t } = useTranslation();
 
   const [selectedItems, setSelectedItems] = useState([]);
   const [shift, setShift] = useState(null);
@@ -188,10 +191,7 @@ const BulkBookingPage = () => {
 
   const handleDialogNo = async () => {
     setShowDialog(false);
-
-    // ── Silent print ────────────────────────────────────────────────────────
     await createAndPrintTicket({ user, items: selectedItems, shift, print });
-
     setTimeout(() => {
       navigate("/order-success", { state: { items: selectedItems, shift } });
     }, 150);
@@ -271,7 +271,7 @@ const BulkBookingPage = () => {
                     color: "#050404",
                   }}
                 >
-                  My Order
+                  {t("menu.myOrder")}
                 </p>
                 <div
                   style={{
@@ -284,7 +284,7 @@ const BulkBookingPage = () => {
                   }}
                 >
                   {selectedItems.length}{" "}
-                  {selectedItems.length === 1 ? "item" : "items"}
+                  {selectedItems.length === 1 ? t("menu.item") : t("menu.items")}
                 </div>
               </div>
 
@@ -295,7 +295,7 @@ const BulkBookingPage = () => {
                   color: "#EA4D4E",
                 }}
               >
-                Enter QTY.
+                {t("menu.enterQty")}
               </span>
             </div>
 
@@ -392,9 +392,9 @@ const BulkBookingPage = () => {
 
       <ConfirmDialog
         visible={showDialog}
-        message="Would you like to add more items?"
-        yesLabel="Yes"
-        noLabel="No"
+        message={t("menu.addMoreMessage")}
+        yesLabel={t("general.yes")}
+        noLabel={t("general.no")}
         onYes={handleDialogYes}
         onNo={handleDialogNo}
       />

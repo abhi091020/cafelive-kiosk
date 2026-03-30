@@ -12,6 +12,7 @@ import {
 import { BookOrderCard } from "@components/menu";
 import { useNavigate } from "react-router-dom";
 import { useUser } from "@context/UserContext";
+import { useTranslation } from "react-i18next";
 import usePrint from "@hooks/usePrint";
 import { createAndPrintTicket } from "@services/print/printService";
 
@@ -66,6 +67,7 @@ const bounceStyle = `
 
 // ─── Shift Alert Dialog ───────────────────────────────────────────────────────
 const ShiftAlertDialog = ({ visible, onClose }) => {
+  const { t } = useTranslation();
   if (!visible) return null;
   return (
     <div
@@ -126,7 +128,7 @@ const ShiftAlertDialog = ({ visible, onClose }) => {
             textAlign: "center",
           }}
         >
-          Please Select a Shift
+          {t("shift.pleaseSelectShift")}
         </p>
         <p
           style={{
@@ -136,7 +138,7 @@ const ShiftAlertDialog = ({ visible, onClose }) => {
             textAlign: "center",
           }}
         >
-          You must select your shift before booking a meal.
+          {t("shift.mustSelectShift")}
         </p>
 
         <button
@@ -154,7 +156,7 @@ const ShiftAlertDialog = ({ visible, onClose }) => {
             boxShadow: "0 4px 14px rgba(234,77,78,0.35)",
           }}
         >
-          OK, Got it
+          {t("shift.okGotIt")}
         </button>
       </div>
     </div>
@@ -167,6 +169,7 @@ const MenuPage = () => {
   const scrollRef = useRef(null);
   const { user } = useUser();
   const { print } = usePrint();
+  const { t } = useTranslation();
 
   const [selectedItems, setSelectedItems] = useState([]);
   const [shift, setShift] = useState(null);
@@ -233,10 +236,7 @@ const MenuPage = () => {
 
   const handleDialogNo = async () => {
     setShowDialog(false);
-
-    // ── Silent print ────────────────────────────────────────────────────────
     await createAndPrintTicket({ user, items: selectedItems, shift, print });
-
     setTimeout(() => {
       navigate("/order-success", { state: { items: selectedItems, shift } });
     }, 150);
@@ -313,7 +313,7 @@ const MenuPage = () => {
                   color: "#050404",
                 }}
               >
-                My Order
+                {t("menu.myOrder")}
               </p>
               <div
                 style={{
@@ -326,7 +326,7 @@ const MenuPage = () => {
                 }}
               >
                 {selectedItems.length}{" "}
-                {selectedItems.length === 1 ? "item" : "items"}
+                {selectedItems.length === 1 ? t("menu.item") : t("menu.items")}
               </div>
             </div>
 
@@ -562,7 +562,7 @@ const MenuPage = () => {
               letterSpacing: "0.5px",
             }}
           >
-            {isEnabled ? "Book Meal" : "Select an item to Book Meal"}
+            {isEnabled ? t("menu.bookMeal") : t("menu.selectItemToBook")}
           </span>
         </button>
       </div>
@@ -571,9 +571,9 @@ const MenuPage = () => {
 
       <ConfirmDialog
         visible={showDialog}
-        message="Would you like to add more items?"
-        yesLabel="Yes"
-        noLabel="No"
+        message={t("menu.addMoreMessage")}
+        yesLabel={t("general.yes")}
+        noLabel={t("general.no")}
         onYes={handleDialogYes}
         onNo={handleDialogNo}
       />

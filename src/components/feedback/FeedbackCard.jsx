@@ -2,41 +2,16 @@
 
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { ROUTES } from "@router/AppRouter";
 import InfoBox from "./InfoBox";
 
 /**
  * FeedbackCard
  * ────────────
- * Single card component for both Food and Overall feedback pages.
- *
- * type="food"    → shows meal section + food categories
- * type="overall" → no meal section + overall categories
- *
- * Replaces: FoodFeedbackCard.jsx + OverallFeedbackCard.jsx
- * DELETE those files after integrating this one.
+ * type="food"    → meal section + food categories
+ * type="overall" → overall categories
  */
-
-const STAR_LEGEND = ["Poor", "Average", "Good", "Excellent"];
-
-const FOOD_CATEGORIES = [
-  { key: "taste", label: "Taste" },
-  { key: "freshness", label: "Freshness" },
-  { key: "portionSize", label: "Portion Size" },
-  { key: "appearance", label: "Appearance" },
-];
-
-const OVERALL_CATEGORIES = [
-  { key: "canteenCleanliness", label: "Canteen Cleanliness" },
-  { key: "staffBehaviours", label: "Staff Behaviours" },
-  { key: "speedOfService", label: "Speed Of Service" },
-  { key: "qualityOfFacilities", label: "Quality Of Facilities" },
-];
-
-const buildInitialRatings = (categories) =>
-  Object.fromEntries(categories.map(({ key }) => [key, 0]));
-
-// ─────────────────────────────────────────────────────────────────────────────
 
 const FeedbackCard = ({
   type = "food",
@@ -45,11 +20,37 @@ const FeedbackCard = ({
   date = "09 Mar 2026 Monday",
 }) => {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const isFood = type === "food";
+
+  // ── Translated constants (inside component so t() is available) ──────────
+  const STAR_LEGEND = [
+    { key: "poor",      label: t("ratings.poor") },
+    { key: "average",   label: t("ratings.average") },
+    { key: "good",      label: t("ratings.good") },
+    { key: "excellent", label: t("ratings.excellent") },
+  ];
+
+  const FOOD_CATEGORIES = [
+    { key: "taste",       label: t("feedback.taste") },
+    { key: "freshness",   label: t("feedback.freshness") },
+    { key: "portionSize", label: t("feedback.portionSize") },
+    { key: "appearance",  label: t("feedback.appearance") },
+  ];
+
+  const OVERALL_CATEGORIES = [
+    { key: "canteenCleanliness",  label: t("feedback.canteenCleanliness") },
+    { key: "staffBehaviours",     label: t("feedback.staffBehaviours") },
+    { key: "speedOfService",      label: t("feedback.speedOfService") },
+    { key: "qualityOfFacilities", label: t("feedback.qualityOfFacilities") },
+  ];
+  // ─────────────────────────────────────────────────────────────────────────
 
   const categories = isFood ? FOOD_CATEGORIES : OVERALL_CATEGORIES;
 
-  const [ratings, setRatings] = useState(() => buildInitialRatings(categories));
+  const [ratings, setRatings] = useState(() =>
+    Object.fromEntries(categories.map(({ key }) => [key, 0]))
+  );
 
   const handleSubmit = () => {
     console.log(`[FeedbackCard] ${type} submitted:`, ratings);
@@ -61,12 +62,11 @@ const FeedbackCard = ({
   };
 
   return (
-    // ── Outer Card ───────────────────────────────────────────────
     <div
       style={{
         position: "absolute",
         left: "clamp(20px, 5.93vw, 64px)",
-        top: "clamp(140px, 18vh, 280px)" /* ← nudged down to clear BackButton */,
+        top: "clamp(140px, 18vh, 280px)",
         right: "clamp(20px, 5.93vw, 64px)",
         bottom: "clamp(60px, 8vh, 100px)",
         borderRadius: "clamp(6px, 0.93vw, 12px)",
@@ -107,9 +107,8 @@ const FeedbackCard = ({
               WebkitTextFillColor: "transparent",
             }}
           >
-            {isFood ? "Give Food " : "Give Overall "}
+            {isFood ? t("feedback.foodFeedback") : t("feedback.overallFeedback")}
           </span>
-          <span style={{ color: "#EA4D4E" }}>Feedback</span>
         </h1>
 
         {/* Star Legend */}
@@ -120,9 +119,9 @@ const FeedbackCard = ({
             alignItems: "center",
           }}
         >
-          {STAR_LEGEND.map((lbl) => (
+          {STAR_LEGEND.map(({ key, label }) => (
             <div
-              key={lbl}
+              key={key}
               style={{
                 display: "flex",
                 flexDirection: "column",
@@ -147,7 +146,7 @@ const FeedbackCard = ({
                   whiteSpace: "nowrap",
                 }}
               >
-                {lbl}
+                {label}
               </span>
             </div>
           ))}
@@ -171,7 +170,7 @@ const FeedbackCard = ({
             margin: 0,
           }}
         >
-          Rate Your Experience
+          {isFood ? t("feedback.rateYourMeal") : t("feedback.rateCanteen")}
         </h2>
         <p
           style={{
@@ -181,9 +180,7 @@ const FeedbackCard = ({
             fontWeight: 400,
           }}
         >
-          {isFood
-            ? "Your feedback helps us improve our food"
-            : "Your feedback helps us improve our Service"}
+          {isFood ? t("feedback.foodFeedbackDesc") : t("feedback.overallFeedbackDesc")}
         </p>
         <p
           style={{

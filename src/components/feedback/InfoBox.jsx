@@ -1,5 +1,6 @@
 // src/components/feedback/InfoBox.jsx
 
+import { useTranslation } from "react-i18next";
 import StarRatingRow from "./StarRatingRow";
 
 const InfoBox = ({
@@ -11,6 +12,8 @@ const InfoBox = ({
   mealName,
   mealItems,
 }) => {
+  const { t } = useTranslation();
+
   const handleChange = (key, val) =>
     setRatings((prev) => ({ ...prev, [key]: val }));
 
@@ -121,7 +124,7 @@ const InfoBox = ({
             e.currentTarget.style.background = "#EA4D4E";
           }}
         >
-          Submit
+          {t("feedback.submitFeedback")}
         </button>
 
         {/* Cancel */}
@@ -157,7 +160,7 @@ const InfoBox = ({
             e.currentTarget.style.background = "transparent";
           }}
         >
-          Cancel
+          {t("general.cancel")}
         </button>
       </div>
     </div>

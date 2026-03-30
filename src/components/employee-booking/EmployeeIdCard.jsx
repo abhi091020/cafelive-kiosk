@@ -1,6 +1,9 @@
 // src/components/employee-booking/EmployeeIdCard.jsx
+import { useTranslation } from "react-i18next";
 
 const EmployeeIdCard = ({ value }) => {
+  const { t } = useTranslation();
+
   return (
     <div
       style={{
@@ -8,7 +11,7 @@ const EmployeeIdCard = ({ value }) => {
         borderRadius: "clamp(12px, 1.5vw, 20px)",
         boxShadow: "0px 5px 20px rgba(0,0,0,0.11)",
         padding: "clamp(1.5vh, 2.5vh, 2.5vh) clamp(2.5vw, 4vw, 5vw)",
-        width: "clamp(400px, 88vw, 1100px)", // ← wider
+        width: "clamp(400px, 88vw, 1100px)",
         boxSizing: "border-box",
       }}
     >
@@ -23,7 +26,7 @@ const EmployeeIdCard = ({ value }) => {
           letterSpacing: "0.01em",
         }}
       >
-        Enter Employee ID
+        {t("employeeBooking.enterEmployeeId")}
       </h2>
 
       {/* Display — read-only, driven by NumPad */}
@@ -31,7 +34,7 @@ const EmployeeIdCard = ({ value }) => {
         style={{
           width: "100%",
           boxSizing: "border-box",
-          padding: "clamp(0.7vh, 1vh, 1.4vh) clamp(1.2vw, 1.8vw, 2vw)", // ← shorter padding
+          padding: "clamp(0.7vh, 1vh, 1.4vh) clamp(1.2vw, 1.8vw, 2vw)",
           background: "#F9F9F9",
           border: "1px solid rgba(0,0,0,0.10)",
           borderRadius: "clamp(6px, 0.8vw, 10px)",

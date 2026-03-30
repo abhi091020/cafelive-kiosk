@@ -1,9 +1,11 @@
 // src/components/home/ActionButtons.jsx
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { ROUTES } from "@router/AppRouter";
 
 const ActionButtons = () => {
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   const handleBookMeal = () => {
     console.log("Book Meal clicked");
@@ -64,7 +66,7 @@ const ActionButtons = () => {
         onPointerUp={handlePointerUp}
         onPointerLeave={handlePointerUp}
       >
-        Book Meal
+        {t("home.bookMeal")}
       </button>
 
       {/* Give Feedback Button */}
@@ -75,7 +77,7 @@ const ActionButtons = () => {
         onPointerUp={handlePointerUp}
         onPointerLeave={handlePointerUp}
       >
-        Give Feedback
+        {t("home.giveFeedback")}
       </button>
     </div>
   );

@@ -1,9 +1,11 @@
 // src/components/staff-home/ActionButtons.jsx
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { ROUTES } from "@router/AppRouter";
 
 const ActionButtons = () => {
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   const handleEmployeeBooking = () => {
     console.log("Employee Booking clicked");
@@ -57,7 +59,7 @@ const ActionButtons = () => {
     <div
       style={{
         position: "absolute",
-        top: "clamp(69vh, 71vh, 73vh)", // ← anchors top of group, buttons grow downward
+        top: "clamp(69vh, 71vh, 73vh)",
         left: "50%",
         transform: "translateX(-50%)",
         zIndex: 10,
@@ -73,7 +75,7 @@ const ActionButtons = () => {
         style={{ ...baseButtonStyle, backgroundColor: "#EA4D4E" }}
         {...pointerHandlers}
       >
-        Employee Booking
+        {t("staffHome.employeeBooking")}
       </button>
 
       {/* Guest Booking */}
@@ -82,7 +84,7 @@ const ActionButtons = () => {
         style={{ ...baseButtonStyle, backgroundColor: "#EA4D4E" }}
         {...pointerHandlers}
       >
-        Guest Booking
+        {t("staffHome.guestBooking")}
       </button>
 
       {/* Bulk Order Booking */}
@@ -91,7 +93,7 @@ const ActionButtons = () => {
         style={{ ...baseButtonStyle, backgroundColor: "#EA4D4E" }}
         {...pointerHandlers}
       >
-        Bulk Order Booking
+        {t("staffHome.bulkBooking")}
       </button>
     </div>
   );

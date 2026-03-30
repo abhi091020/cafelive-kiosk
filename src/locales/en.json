@@ -50,15 +50,19 @@
     "addToOrder": "Add",
     "removeFromOrder": "Remove",
     "bookMeal": "Book Meal",
+    "selectItemToBook": "Select an item to Book Meal",
     "addMoreItems": "Add More Items?",
-    "addMoreMessage": "Would you like to add more items to your order?",
+    "addMoreMessage": "Would you like to add more items?",
     "continueAdding": "Continue Adding",
     "proceedToConfirm": "Proceed",
     "confirmOrder": "Confirm Order?",
     "confirmOrderMessage": "Are you sure you want to book this order?",
     "emptyOrder": "No items selected",
     "noMenuAvailable": "No menu available for this shift",
-    "qty": "Qty"
+    "qty": "Qty",
+    "enterQty": "Enter QTY.",
+    "items": "items",
+    "item": "item"
   },
   "order": {
     "orderSuccess": "Order Booked!",
@@ -67,6 +71,11 @@
     "printingTicket": "Printing your ticket...",
     "redirecting": "Redirecting in {{seconds}}s...",
     "thankYou": "Enjoy your meal!"
+  },
+  "shift": {
+    "pleaseSelectShift": "Please Select a Shift",
+    "mustSelectShift": "You must select your shift before booking a meal.",
+    "okGotIt": "OK, Got it"
   },
   "guest": {
     "guestMeal": "Guest Meal Booking",
@@ -127,5 +136,13 @@
     "enter": "Enter",
     "clear": "Clear",
     "backspace": "⌫"
+  },
+  "staffHome": {
+    "employeeBooking": "Employee Booking",
+    "guestBooking": "Guest Booking",
+    "bulkBooking": "Bulk Order Booking"
+  },
+  "employeeBooking": {
+    "enterEmployeeId": "Enter Employee ID"
   }
 }

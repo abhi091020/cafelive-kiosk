@@ -1,3 +1,148 @@
 {
-  "_comment": "Marathi translations pending. All keys fall back to en.json automatically. Do not auto-translate — provide translations from a professional translator or the client."
+  "general": {
+    "yes": "होय",
+    "no": "नाही",
+    "ok": "ठीक आहे",
+    "submit": "सादर करा",
+    "cancel": "रद्द करा",
+    "confirm": "पुष्टी करा",
+    "print": "प्रिंट करा",
+    "back": "मागे",
+    "next": "पुढे",
+    "loading": "कृपया प्रतीक्षा करा...",
+    "error": "काहीतरी चुकले",
+    "retry": "पुन्हा प्रयत्न करा",
+    "close": "बंद करा",
+    "search": "शोधा",
+    "clear": "साफ करा",
+    "done": "झाले",
+    "appName": "CafeLive"
+  },
+  "splash": {
+    "welcome": "स्वागत आहे",
+    "companyName": "Mukand Limited",
+    "tagline1": "स्मार्ट जेवण।",
+    "tagline2": "स्मार्ट प्रवेश।",
+    "scanPrompt": "स्कॅनसाठी तयार",
+    "scanning": "स्कॅन होत आहे...",
+    "selectLanguage": "भाषा निवडा",
+    "tapToStart": "आपली भाषा निवडण्यासाठी टॅप करा",
+    "poweredBy": "DAccess Security Systems Pvt. Ltd द्वारे संचालित"
+  },
+  "home": {
+    "welcomeUser": "स्वागत आहे, {{name}}",
+    "employeeId": "कर्मचारी ID: {{id}}",
+    "department": "विभाग: {{department}}",
+    "shift": "शिफ्ट: {{shift}}",
+    "bookMeal": "जेवण बुक करा",
+    "giveFeedback": "अभिप्राय द्या",
+    "guestMeal": "पाहुण्यांचे जेवण",
+    "logout": "झाले",
+    "sessionExpiry": "सत्र {{seconds}} सेकंदात संपेल"
+  },
+  "menu": {
+    "bookYourOrder": "आपली ऑर्डर बुक करा",
+    "shiftSelection": "शिफ्ट निवडा",
+    "myOrder": "माझी ऑर्डर",
+    "meal": "जेवण",
+    "snacks": "नाश्ता",
+    "teaCoffee": "चहा / कॉफी",
+    "addToOrder": "जोडा",
+    "removeFromOrder": "काढा",
+    "bookMeal": "जेवण बुक करा",
+    "selectItemToBook": "जेवण बुक करण्यासाठी वस्तू निवडा",
+    "addMoreItems": "आणखी वस्तू जोडायच्या?",
+    "addMoreMessage": "आपण आणखी वस्तू जोडू इच्छिता?",
+    "continueAdding": "जोडणे सुरू ठेवा",
+    "proceedToConfirm": "पुढे जा",
+    "confirmOrder": "ऑर्डरची पुष्टी करा?",
+    "confirmOrderMessage": "आपण खरोखर ही ऑर्डर बुक करू इच्छिता?",
+    "emptyOrder": "कोणतीही वस्तू निवडलेली नाही",
+    "noMenuAvailable": "या शिफ्टसाठी मेनू उपलब्ध नाही",
+    "qty": "प्रमाण",
+    "enterQty": "प्रमाण टाका",
+    "items": "वस्तू",
+    "item": "वस्तू"
+  },
+  "order": {
+    "orderSuccess": "ऑर्डर बुक झाली!",
+    "orderComplete": "आपले जेवण यशस्वीरित्या बुक झाले.",
+    "tokenNumber": "टोकन नंबर",
+    "printingTicket": "तिकीट प्रिंट होत आहे...",
+    "redirecting": "{{seconds}} सेकंदात पुनर्निर्देशित होत आहे...",
+    "thankYou": "जेवणाचा आनंद घ्या!"
+  },
+  "shift": {
+    "pleaseSelectShift": "कृपया शिफ्ट निवडा",
+    "mustSelectShift": "जेवण बुक करण्यापूर्वी आपली शिफ्ट निवडा.",
+    "okGotIt": "ठीक आहे, समजले"
+  },
+  "guest": {
+    "guestMeal": "पाहुण्यांची जेवण बुकिंग",
+    "searchGuestName": "पाहुण्याचे नाव शोधा",
+    "searchPlaceholder": "पाहुण्याचे नाव टाइप करा...",
+    "requestId": "विनंती ID",
+    "enterRequestId": "विनंती ID टाका",
+    "guestDetails": "पाहुण्याचे तपशील",
+    "hostDetails": "यजमानाचे तपशील",
+    "guestName": "पाहुण्याचे नाव",
+    "hostName": "यजमान",
+    "company": "कंपनी",
+    "printGuestTicket": "पाहुण्याचे तिकीट प्रिंट करा",
+    "noGuestsFound": "कोणताही पाहुणा सापडला नाही",
+    "confirmGuest": "पाहुण्याच्या जेवणाची पुष्टी करा?",
+    "guestBooked": "पाहुण्याचे जेवण यशस्वीरित्या बुक झाले"
+  },
+  "feedback": {
+    "feedbackTitle": "अभिप्राय द्या",
+    "feedbackSubtitle": "आमची कॅन्टीन सेवा सुधारण्यास मदत करा",
+    "foodFeedback": "जेवणाचा अभिप्राय",
+    "foodFeedbackDesc": "आजच्या जेवणाची गुणवत्ता रेट करा",
+    "overallFeedback": "एकूण अभिप्राय",
+    "overallFeedbackDesc": "कॅन्टीन अनुभव रेट करा",
+    "taste": "चव",
+    "freshness": "ताजेपणा",
+    "portionSize": "प्रमाण",
+    "appearance": "देखावा",
+    "canteenCleanliness": "स्वच्छता",
+    "staffBehaviours": "कर्मचारी वर्तन",
+    "speedOfService": "सेवेचा वेग",
+    "qualityOfFacilities": "सुविधा",
+    "submitFeedback": "अभिप्राय सादर करा",
+    "feedbackSuccess": "धन्यवाद!",
+    "feedbackSuccessMessage": "आपला अभिप्राय नोंदवला गेला.",
+    "rateYourMeal": "आपल्या जेवणाला रेट करा",
+    "rateCanteen": "कॅन्टीनला रेट करा",
+    "selectRating": "कृपया सर्व निकष रेट करा"
+  },
+  "ratings": {
+    "poor": "खराब",
+    "average": "सरासरी",
+    "good": "चांगले",
+    "excellent": "उत्कृष्ट"
+  },
+  "errors": {
+    "networkError": "नेटवर्क त्रुटी. कृपया पुन्हा प्रयत्न करा.",
+    "printerError": "प्रिंटर उपलब्ध नाही. कृपया कर्मचाऱ्यांशी संपर्क करा.",
+    "scanError": "कार्ड ओळखले नाही. कृपया पुन्हा प्रयत्न करा.",
+    "alreadyBooked": "आपण या शिफ्टसाठी आधीच जेवण बुक केले आहे.",
+    "noMenuAvailable": "आपल्या शिफ्टसाठी कोणताही मेनू उपलब्ध नाही.",
+    "sessionExpired": "सत्र संपले. कृपया आपले कार्ड पुन्हा स्कॅन करा.",
+    "unknownError": "एक अनपेक्षित त्रुटी आली.",
+    "apiTimeout": "विनंती वेळ संपली. कृपया पुन्हा प्रयत्न करा.",
+    "feedbackAlreadySubmitted": "आजचा अभिप्राय आधीच सादर केला गेला आहे."
+  },
+  "numpad": {
+    "enter": "दाखल करा",
+    "clear": "साफ करा",
+    "backspace": "⌫"
+  },
+  "staffHome": {
+    "employeeBooking": "कर्मचारी बुकिंग",
+    "guestBooking": "पाहुणे बुकिंग",
+    "bulkBooking": "बल्क ऑर्डर बुकिंग"
+  },
+  "employeeBooking": {
+    "enterEmployeeId": "कर्मचारी ID टाका"
+  }
 }

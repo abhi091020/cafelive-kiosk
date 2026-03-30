@@ -1,9 +1,11 @@
 // src/components/employee-booking/EmployeeBookingActions.jsx
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { ROUTES } from "@router/AppRouter";
 
 const EmployeeBookingActions = ({ onSubmit }) => {
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   const handleCancel = () => {
     navigate(ROUTES.STAFF_HOME);
@@ -70,7 +72,7 @@ const EmployeeBookingActions = ({ onSubmit }) => {
         onPointerUp={handlePointerUp}
         onPointerLeave={handlePointerUp}
       >
-        Submit
+        {t("general.submit")}
       </button>
 
       {/* Cancel — outlined red */}
@@ -86,7 +88,7 @@ const EmployeeBookingActions = ({ onSubmit }) => {
         onPointerUp={handlePointerUpCancel}
         onPointerLeave={handlePointerUpCancel}
       >
-        Cancel
+        {t("general.cancel")}
       </button>
     </div>
   );

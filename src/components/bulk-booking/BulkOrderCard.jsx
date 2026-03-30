@@ -1,6 +1,7 @@
 // src/components/bulk-booking/BulkOrderCard.jsx
 
 import { useState, useRef } from "react";
+import { useTranslation } from "react-i18next";
 
 import SimpleVegMeal from "@assets/meal/simplevegmeal.png";
 import SpecialVegMeal from "@assets/meal/specialvegmeal.png";
@@ -68,6 +69,7 @@ const BulkOrderCard = ({
   shift,
   onShiftChange,
 }) => {
+  const { t } = useTranslation();
   const [shiftOpen, setShiftOpen] = useState(false);
   const [activeCategory, setActiveCategory] = useState("meal");
   const rightPanelRef = useRef(null);
@@ -100,6 +102,7 @@ const BulkOrderCard = ({
         .bulk-right-scroll::-webkit-scrollbar-thumb { background: #EA4D4E; border-radius: 10px; }
       `}</style>
 
+      {/* ══ HEADER ══════════════════════════════════════════════════════════ */}
       <div
         style={{
           display: "flex",
@@ -117,9 +120,10 @@ const BulkOrderCard = ({
             fontSize: "clamp(1rem, 1.8vw, 1.4rem)",
           }}
         >
-          Book Your Order...!
+          {t("menu.bookYourOrder")}
         </span>
 
+        {/* Shift dropdown */}
         <div style={{ position: "relative" }}>
           <button
             onClick={() => setShiftOpen((p) => !p)}
@@ -139,7 +143,7 @@ const BulkOrderCard = ({
               transition: "all 0.2s",
             }}
           >
-            {shift ?? "Shift Selection"}
+            {shift ?? t("menu.shiftSelection")}
             <span style={{ fontSize: "0.75em" }}>▾</span>
           </button>
 
@@ -187,7 +191,9 @@ const BulkOrderCard = ({
         </div>
       </div>
 
+      {/* ══ BODY ════════════════════════════════════════════════════════════ */}
       <div style={{ display: "flex", alignItems: "flex-start" }}>
+        {/* ── LEFT SIDEBAR ─────────────────────────────────────────────── */}
         <div
           style={{
             width: "26.41%",
@@ -198,17 +204,9 @@ const BulkOrderCard = ({
           }}
         >
           {[
-            { key: "meal", label: "Meal", src: "/src/assets/meal/meal.png" },
-            {
-              key: "snacks",
-              label: "Snacks",
-              src: "/src/assets/meal/snacks.png",
-            },
-            {
-              key: "tea_coffee",
-              label: "Tea / Coffee",
-              src: "/src/assets/meal/teacoffee.png",
-            },
+            { key: "meal",       label: "Meal",         src: "/src/assets/meal/meal.png" },
+            { key: "snacks",     label: "Snacks",       src: "/src/assets/meal/snacks.png" },
+            { key: "tea_coffee", label: "Tea / Coffee", src: "/src/assets/meal/teacoffee.png" },
           ].map((cat, idx, arr) => (
             <div
               key={cat.key}
@@ -225,7 +223,6 @@ const BulkOrderCard = ({
                   activeCategory === cat.key
                     ? "3px solid #B91C1C"
                     : "3px solid transparent",
-
                 background:
                   activeCategory === cat.key ? "#FFF0F0" : "transparent",
                 borderBottom:
@@ -245,7 +242,7 @@ const BulkOrderCard = ({
               />
               <p
                 style={{
-                  fontSize: "clamp(1.2rem, 2vw, 1.7rem)", // was clamp(1rem, 1.6vw, 1.4rem)
+                  fontSize: "clamp(1.2rem, 2vw, 1.7rem)",
                   fontWeight: activeCategory === cat.key ? 700 : 500,
                   color: activeCategory === cat.key ? "#B91C1C" : "#1F2937",
                   margin: "8px 0 0 0",
@@ -259,6 +256,7 @@ const BulkOrderCard = ({
           ))}
         </div>
 
+        {/* ── RIGHT PANEL (scrollable) ──────────────────────────────────── */}
         <div
           ref={rightPanelRef}
           className="bulk-right-scroll"
@@ -286,7 +284,7 @@ const BulkOrderCard = ({
                     boxSizing: "border-box",
                     cursor: "pointer",
                     background: isSelected ? "#FEF2F2" : "transparent",
-                    borderLeft: "none", // removed red line
+                    borderLeft: "none",
                     transition: "background 0.15s",
                     userSelect: "none",
                   }}
@@ -305,7 +303,7 @@ const BulkOrderCard = ({
                     <p
                       style={{
                         margin: item.desc ? "0 0 6px 0" : 0,
-                        fontSize: "clamp(1.3rem, 2.2vw, 1.85rem)", // was clamp(1.1rem, 1.8vw, 1.5rem)
+                        fontSize: "clamp(1.3rem, 2.2vw, 1.85rem)",
                         fontWeight: 700,
                         color: isSelected ? "#B91C1C" : "#A50000",
                         lineHeight: 1.3,
@@ -317,7 +315,7 @@ const BulkOrderCard = ({
                       <p
                         style={{
                           margin: 0,
-                          fontSize: "clamp(1rem, 1.6vw, 1.4rem)", // was clamp(0.9rem, 1.3vw, 1.15rem)
+                          fontSize: "clamp(1rem, 1.6vw, 1.4rem)",
                           color: "#676666",
                           lineHeight: 1.5,
                         }}

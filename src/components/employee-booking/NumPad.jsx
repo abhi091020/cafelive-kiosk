@@ -1,17 +1,20 @@
 // src/components/employee-booking/NumPad.jsx
-
-const keys = [
-  ["1", "2", "3"],
-  ["4", "5", "6"],
-  ["7", "8", "9"],
-  ["⌫", "0", "Enter"],
-];
+import { useTranslation } from "react-i18next";
 
 const NumPad = ({ onChange, onEnter, value }) => {
+  const { t } = useTranslation();
+
+  const keys = [
+    ["1", "2", "3"],
+    ["4", "5", "6"],
+    ["7", "8", "9"],
+    ["⌫", "0", "ENTER"],
+  ];
+
   const handleKey = (key) => {
     if (key === "⌫") {
       onChange(value.slice(0, -1));
-    } else if (key === "Enter") {
+    } else if (key === "ENTER") {
       onEnter();
     } else {
       onChange(value + key);
@@ -31,7 +34,7 @@ const NumPad = ({ onChange, onEnter, value }) => {
   return (
     <div
       style={{
-        width: "clamp(500px, 80vw, 800px)", // ← wider, matches card
+        width: "clamp(500px, 80vw, 800px)",
         background: "#F5F5F5",
         borderRadius: "clamp(10px, 1.2vw, 14px)",
         boxShadow: "0px 5px 40px rgba(0,0,0,0.10)",
@@ -48,7 +51,7 @@ const NumPad = ({ onChange, onEnter, value }) => {
           }}
         >
           {row.map((key) => {
-            const isEnter = key === "Enter";
+            const isEnter = key === "ENTER";
             const isBackspace = key === "⌫";
 
             return (
@@ -93,25 +96,11 @@ const NumPad = ({ onChange, onEnter, value }) => {
                       strokeWidth="2"
                       fill="none"
                     />
-                    <line
-                      x1="16"
-                      y1="9"
-                      x2="28"
-                      y2="17"
-                      stroke="#1a1a1a"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                    />
-                    <line
-                      x1="28"
-                      y1="9"
-                      x2="16"
-                      y2="17"
-                      stroke="#1a1a1a"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                    />
+                    <line x1="16" y1="9" x2="28" y2="17" stroke="#1a1a1a" strokeWidth="2" strokeLinecap="round" />
+                    <line x1="28" y1="9" x2="16" y2="17" stroke="#1a1a1a" strokeWidth="2" strokeLinecap="round" />
                   </svg>
+                ) : isEnter ? (
+                  t("numpad.enter")
                 ) : (
                   key
                 )}

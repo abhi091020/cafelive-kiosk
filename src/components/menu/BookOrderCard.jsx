@@ -1,6 +1,7 @@
 // src/components/menu/BookOrderCard.jsx
 
 import { useState, useRef } from "react";
+import { useTranslation } from "react-i18next";
 
 import SimpleVegMeal from "@assets/meal/simplevegmeal.png";
 import SpecialVegMeal from "@assets/meal/specialvegmeal.png";
@@ -68,11 +69,18 @@ const BookOrderCard = ({
   shift,
   onShiftChange,
 }) => {
+  const { t } = useTranslation();
   const [shiftOpen, setShiftOpen] = useState(false);
   const [activeCategory, setActiveCategory] = useState("meal");
   const rightPanelRef = useRef(null);
 
   const items = MENU_ITEMS[activeCategory] || [];
+
+  const CATEGORIES = [
+    { key: "meal",       label: t("menu.meal"),      src: "/src/assets/meal/meal.png" },
+    { key: "snacks",     label: t("menu.snacks"),    src: "/src/assets/meal/snacks.png" },
+    { key: "tea_coffee", label: t("menu.teaCoffee"), src: "/src/assets/meal/teacoffee.png" },
+  ];
 
   const handleCategoryChange = (key) => {
     setActiveCategory(key);
@@ -118,7 +126,7 @@ const BookOrderCard = ({
             fontSize: "clamp(1rem, 1.8vw, 1.4rem)",
           }}
         >
-          Book Your Order...!
+          {t("menu.bookYourOrder")}
         </span>
 
         {/* Shift dropdown */}
@@ -141,7 +149,7 @@ const BookOrderCard = ({
               transition: "all 0.2s",
             }}
           >
-            {shift ?? "Shift Selection"}
+            {shift ?? t("menu.shiftSelection")}
             <span style={{ fontSize: "0.75em" }}>▾</span>
           </button>
 
@@ -201,19 +209,7 @@ const BookOrderCard = ({
             flexDirection: "column",
           }}
         >
-          {[
-            { key: "meal", label: "Meal", src: "/src/assets/meal/meal.png" },
-            {
-              key: "snacks",
-              label: "Snacks",
-              src: "/src/assets/meal/snacks.png",
-            },
-            {
-              key: "tea_coffee",
-              label: "Tea / Coffee",
-              src: "/src/assets/meal/teacoffee.png",
-            },
-          ].map((cat, idx, arr) => (
+          {CATEGORIES.map((cat, idx, arr) => (
             <div
               key={cat.key}
               onClick={() => handleCategoryChange(cat.key)}
@@ -248,7 +244,7 @@ const BookOrderCard = ({
               />
               <p
                 style={{
-                  fontSize: "clamp(1.2rem, 2vw, 1.7rem)", // ← increased
+                  fontSize: "clamp(1.2rem, 2vw, 1.7rem)",
                   fontWeight: activeCategory === cat.key ? 700 : 500,
                   color: activeCategory === cat.key ? "#B91C1C" : "#1F2937",
                   margin: "8px 0 0 0",
@@ -291,7 +287,6 @@ const BookOrderCard = ({
                     cursor: "pointer",
                     background: isSelected ? "#FEF2F2" : "transparent",
                     borderLeft: "none",
-
                     transition: "background 0.15s, border-color 0.15s",
                     userSelect: "none",
                   }}
@@ -311,7 +306,7 @@ const BookOrderCard = ({
                     <p
                       style={{
                         margin: item.desc ? "0 0 6px 0" : 0,
-                        fontSize: "clamp(1.3rem, 2.2vw, 1.85rem)", // ← increased
+                        fontSize: "clamp(1.3rem, 2.2vw, 1.85rem)",
                         fontWeight: 700,
                         color: isSelected ? "#B91C1C" : "#A50000",
                         lineHeight: 1.3,
@@ -323,7 +318,7 @@ const BookOrderCard = ({
                       <p
                         style={{
                           margin: 0,
-                          fontSize: "clamp(1rem, 1.6vw, 1.4rem)", // ← increased
+                          fontSize: "clamp(1rem, 1.6vw, 1.4rem)",
                           color: "#676666",
                           lineHeight: 1.5,
                         }}

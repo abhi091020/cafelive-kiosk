@@ -1,9 +1,11 @@
 // src/components/common/UserWelcome.jsx
 
+import { useTranslation } from "react-i18next";
 import { useUser } from "@context/UserContext";
 
 const UserWelcome = () => {
   const { user } = useUser();
+  const { t } = useTranslation();
 
   if (!user) return null;
 
@@ -12,7 +14,6 @@ const UserWelcome = () => {
       style={{
         position: "absolute",
         top: "clamp(9vh, 11.00vh, 13vh)",
-        /* pushed right enough so BackButton sits cleanly to its left */
         left: "clamp(90px, 12vw, 140px)",
         zIndex: 10,
       }}
@@ -29,10 +30,10 @@ const UserWelcome = () => {
           lineHeight: 1.0,
         }}
       >
-        Welcome {user.name}
+        {t("home.welcomeUser", { name: user.name })}
       </h1>
 
-      {/* User Info */}
+      {/* User Info — values only, no labels */}
       <p
         style={{
           margin: "clamp(0.5vh, 0.8vh, 1vh) 0 0 0",
