@@ -1,0 +1,47 @@
+// src/pages/home/index.jsx
+
+import {
+  Header,
+  Footer,
+  UserWelcome,
+  DateTimeDisplay,
+  BackButton,
+} from "@common";
+import { HomeIllustration, ActionButtons } from "@components/home";
+
+const HomePage = () => {
+  return (
+    <div
+      style={{
+        width: "100vw",
+        height: "100vh",
+        overflow: "hidden",
+        position: "relative",
+        backgroundColor: "#FFFFFF",
+      }}
+    >
+      {/* ── HEADER ── */}
+      <Header />
+
+      {/* ── BACK BUTTON ── */}
+      <BackButton to="/" />
+
+      {/* ── USER WELCOME ── */}
+      <UserWelcome />
+
+      {/* ── DATE TIME ── */}
+      <DateTimeDisplay />
+
+      {/* ── CENTRAL ILLUSTRATION ── */}
+      <HomeIllustration />
+
+      {/* ── ACTION BUTTONS ── */}
+      <ActionButtons />
+
+      {/* ── FOOTER ── */}
+      <Footer />
+    </div>
+  );
+};
+
+export default HomePage;

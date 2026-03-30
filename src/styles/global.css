@@ -1,0 +1,272 @@
+/* src\styles\global.css */
+
+/* ── Import design tokens ─────────────────────────────────────────────────── */
+@import "./variables.css";
+
+/* ── Reset ────────────────────────────────────────────────────────────────── */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+/* ── Root ─────────────────────────────────────────────────────────────────── */
+html {
+  height: 100%;
+  font-size: 16px;
+  -webkit-text-size-adjust: 100%; /* prevent font scaling on orientation change */
+  text-size-adjust: 100%;
+}
+
+body {
+  height: 100%;
+  font-family: var(--font-family);
+  font-size: var(--font-md);
+  background-color: var(--color-bg-primary);
+  color: var(--color-text-primary);
+  line-height: 1.5;
+  overflow: hidden; /* kiosk — no body scroll ever */
+
+  /* ── Touch optimizations ────────────────────────────────────────────── */
+  -webkit-tap-highlight-color: transparent; /* remove grey flash on tap */
+  touch-action: manipulation; /* disable double-tap zoom */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ── Root mount point ─────────────────────────────────────────────────────── */
+#root {
+  height: 100%;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── No text selection on kiosk ───────────────────────────────────────────── */
+/* Users should never be able to select/highlight text on a kiosk             */
+* {
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* Allow selection only inside inputs (for NumPad value display) */
+input,
+textarea {
+  -webkit-user-select: text;
+  user-select: text;
+}
+
+/* ── No outline on touch — use active states instead ─────────────────────── */
+*:focus {
+  outline: none;
+}
+
+*:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+/* ── Buttons reset ────────────────────────────────────────────────────────── */
+button {
+  cursor: pointer;
+  border: none;
+  background: none;
+  font-family: var(--font-family);
+  font-size: var(--btn-font);
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+/* ── Images ───────────────────────────────────────────────────────────────── */
+img,
+svg {
+  display: block;
+  max-width: 100%;
+}
+
+/* ── Links ────────────────────────────────────────────────────────────────── */
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+/* ── Scrollbar — hidden by default, thin when needed ─────────────────────── */
+/* Kiosk screens should not show scrollbars — content must fit the screen     */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-bg-secondary);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-bg-input);
+  border-radius: var(--radius-full);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-text-muted);
+}
+
+/* ── Utility classes ──────────────────────────────────────────────────────── */
+
+/* Full screen container — used by every screen */
+.screen {
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--color-bg-primary);
+}
+
+/* Content area between header and footer */
+.screen-content {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: var(--screen-padding);
+}
+
+/* Centered layout — used on Splash, OrderSuccess, FeedbackSuccess */
+.screen-center {
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--screen-padding);
+  background: var(--color-bg-primary);
+}
+
+/* Overlay backdrop — used by Modal and Loader */
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: var(--overlay-bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: var(--z-modal);
+}
+
+/* ── Animations ───────────────────────────────────────────────────────────── */
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.92);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(40px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes slideInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-40px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* Animation utility classes */
+.animate-fadeIn {
+  animation: fadeIn var(--transition-base) ease forwards;
+}
+.animate-fadeInUp {
+  animation: fadeInUp var(--transition-base) ease forwards;
+}
+.animate-fadeInDown {
+  animation: fadeInDown var(--transition-base) ease forwards;
+}
+.animate-scaleIn {
+  animation: scaleIn var(--transition-base) ease forwards;
+}
+.animate-spin {
+  animation: spin 0.8s linear infinite;
+}
+.animate-pulse {
+  animation: pulse 1.5s ease-in-out infinite;
+}
+.animate-slideInRight {
+  animation: slideInRight var(--transition-base) ease forwards;
+}
+.animate-slideInLeft {
+  animation: slideInLeft var(--transition-base) ease forwards;
+}
