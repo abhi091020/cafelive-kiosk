@@ -22,8 +22,14 @@ const axiosInstance = axios.create({
 
 axiosInstance.interceptors.request.use(
   (config) => {
-    // Attach auth token if present (Phase 5 — Java backend auth)
-    const token = sessionStorage.getItem(AUTH_TOKEN_KEY);
+    // Attach auth token:
+    // 1. Check sessionStorage first (runtime login token)
+    // 2. Fallback to .env token (VITE_CAFELIVE_TOKEN)
+    const token =
+      sessionStorage.getItem(AUTH_TOKEN_KEY) ||
+      import.meta.env.VITE_CAFELIVE_TOKEN;
+      console.log("Token being sent:", token ? token.substring(0, 20) + "..." : "NO TOKEN");
+
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }

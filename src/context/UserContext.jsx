@@ -1,4 +1,4 @@
-// src\context\UserContext.jsx
+// src/context/UserContext.jsx
 
 import { createContext, useContext, useState, useCallback } from "react";
 import PropTypes from "prop-types";
@@ -25,8 +25,10 @@ export const UserProvider = ({ children }) => {
    *   employeeId:   string,
    *   name:         string,
    *   department:   string,
-   *   shift:        string,   // "Morning" | "Evening" | "Night"
-   *   canBookGuest: boolean
+   *   shift:        string,     // "Morning" | "Evening" | "Night"
+   *   canBookGuest: boolean,
+   *   branchId:     number,     // used to filter menu by branch
+   *   branchName:   string,     // e.g. "Mumbai"
    * }
    *
    * @param {Object} userData - Raw response from userAPI.scanCard()
@@ -38,12 +40,14 @@ export const UserProvider = ({ children }) => {
     }
 
     const normalised = {
-      id: userData.id ?? "",
-      employeeId: userData.employeeId ?? userData.id ?? "",
-      name: userData.name ?? "Employee",
-      department: userData.department ?? "—",
-      shift: userData.shift ?? "General",
+      id:           userData.id          ?? "",
+      employeeId:   userData.employeeId  ?? userData.id ?? "",
+      name:         userData.name        ?? "Employee",
+      department:   userData.department  ?? "—",
+      shift:        userData.shift       ?? "General",
       canBookGuest: userData.canBookGuest ?? false,
+      branchId:     userData.branchId    ?? null,   // ← added
+      branchName:   userData.branchName  ?? "",     // ← added
     };
 
     setUserState(normalised);

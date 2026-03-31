@@ -8,21 +8,18 @@ import { fileURLToPath, URL } from "url";
 // KIOSK CONFIGURATION - 15" Portrait Display (1080×1920)
 // ══════════════════════════════════════════════════════════════════════════
 
+// ── Backend API URL ───────────────────────────────────────────────────────
+// Change this IP when backend dev switches laptops
+const BACKEND_URL = "http://192.168.10.120:8000";
+
 export default defineConfig({
   plugins: [react()],
 
   resolve: {
     alias: {
-      // ── Root src alias — required for @/i18n imports ─────────────────────
       "@": fileURLToPath(new URL("./src", import.meta.url)),
-
-      // ── Folder aliases ────────────────────────────────────────────────────
-      "@components": fileURLToPath(
-        new URL("./src/components", import.meta.url),
-      ),
-      "@common": fileURLToPath(
-        new URL("./src/components/common", import.meta.url),
-      ),
+      "@components": fileURLToPath(new URL("./src/components", import.meta.url)),
+      "@common": fileURLToPath(new URL("./src/components/common", import.meta.url)),
       "@pages": fileURLToPath(new URL("./src/pages", import.meta.url)),
       "@assets": fileURLToPath(new URL("./src/assets", import.meta.url)),
       "@context": fileURLToPath(new URL("./src/context", import.meta.url)),
@@ -36,39 +33,45 @@ export default defineConfig({
     },
   },
 
-  // ── Development Server Configuration ─────────────────────────────────────
+  // ── Development Server ────────────────────────────────────────────────────
   server: {
     port: 3000,
-    host: "0.0.0.0", // Listen on all network interfaces
+    host: "0.0.0.0",
     strictPort: true,
-    open: false, // Use launch-kiosk.bat instead
+    open: false,
     cors: true,
+
+    // ── Proxy — routes /api → backend, bypasses CORS ─────────────────────
+    // Only change BACKEND_URL above when backend IP changes
+    proxy: {
+      "/api": {
+        target: BACKEND_URL,
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api/, ""),
+      },
+    },
   },
 
-  // ── Preview Server Configuration ──────────────────────────────────────────
+  // ── Preview Server ────────────────────────────────────────────────────────
   preview: {
     port: 4173,
     host: "0.0.0.0",
     strictPort: true,
   },
 
-  // ── Build Optimizations for Kiosk ────────────────────────────────────────
+  // ── Build Optimizations ───────────────────────────────────────────────────
   build: {
     outDir: "dist",
     sourcemap: false,
     minify: "terser",
-
     terserOptions: {
       compress: {
-        drop_console: true, // Remove console.logs in production
+        drop_console: true,
         drop_debugger: true,
         pure_funcs: ["console.info", "console.debug", "console.warn"],
       },
-      format: {
-        comments: false,
-      },
+      format: { comments: false },
     },
-
     rollupOptions: {
       output: {
         manualChunks: {
@@ -78,28 +81,14 @@ export default defineConfig({
         },
       },
     },
-
     chunkSizeWarningLimit: 1000,
     reportCompressedSize: true,
     target: "es2020",
   },
 
-  // ── Asset Optimization ───────────────────────────────────────────────────
   assetsInclude: ["**/*.png", "**/*.jpg", "**/*.jpeg", "**/*.svg", "**/*.webp"],
-
-  // ── CSS Configuration ────────────────────────────────────────────────────
-  css: {
-    devSourcemap: true,
-  },
-
-  // ── Dependency Optimization ──────────────────────────────────────────────
+  css: { devSourcemap: true },
   optimizeDeps: {
-    include: [
-      "react",
-      "react-dom",
-      "react-router-dom",
-      "i18next",
-      "react-i18next",
-    ],
+    include: ["react", "react-dom", "react-router-dom", "i18next", "react-i18next"],
   },
 });

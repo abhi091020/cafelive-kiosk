@@ -169,7 +169,10 @@ const MenuPage = () => {
   const scrollRef = useRef(null);
   const { user } = useUser();
   const { print } = usePrint();
-  const { t } = useTranslation();
+
+  // ✅ Added i18n for language-aware item names
+  const { t, i18n } = useTranslation();
+  const lang = i18n.language; // "en" | "hi" | "mr"
 
   const [selectedItems, setSelectedItems] = useState([]);
   const [shift, setShift] = useState(null);
@@ -177,6 +180,13 @@ const MenuPage = () => {
   const [showShiftAlert, setShowShiftAlert] = useState(false);
   const [canScrollDown, setCanScrollDown] = useState(false);
   const [scrollRatio, setScrollRatio] = useState(0);
+
+  // ✅ Language-aware item name — Hindi / Marathi / English
+  const getItemName = (item) => {
+    if (lang === "hi" && item.nameHi) return item.nameHi;
+    if (lang === "mr" && item.nameMr) return item.nameMr;
+    return item.nameEn || item.name || "";
+  };
 
   const selectedItemIds = useMemo(
     () => new Set(selectedItems.map((i) => i.id)),
@@ -387,6 +397,7 @@ const MenuPage = () => {
                       flexShrink: 0,
                     }}
                   >
+                    {/* ✅ Language-aware name */}
                     <span
                       style={{
                         fontSize: "1.25rem",
@@ -395,7 +406,7 @@ const MenuPage = () => {
                         flex: 1,
                       }}
                     >
-                      {item.name}
+                      {getItemName(item)}
                     </span>
 
                     <div
