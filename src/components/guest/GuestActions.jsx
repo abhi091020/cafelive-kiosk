@@ -1,10 +1,13 @@
 // src/components/guest/GuestActions.jsx
+
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import ConfirmDialog from "@components/common/ConfirmDialog";
 import { ROUTES } from "@router/AppRouter";
 
 const GuestActions = ({ canPrint, onPrint, onCancel, reqId }) => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [showConfirm, setShowConfirm] = useState(false);
 
@@ -32,19 +35,9 @@ const GuestActions = ({ canPrint, onPrint, onCancel, reqId }) => {
     e.currentTarget.style.backgroundColor = "#FFFFFF";
   };
 
-  const handlePrintClick = () => {
-    if (canPrint) setShowConfirm(true);
-  };
-
-  const handleConfirmOk = () => {
-    setShowConfirm(false);
-    onPrint?.();
-    navigate(ROUTES.ORDER_SUCCESS);
-  };
-
-  const handleConfirmCancel = () => {
-    setShowConfirm(false);
-  };
+  const handlePrintClick  = () => { if (canPrint) setShowConfirm(true); };
+  const handleConfirmOk   = () => { setShowConfirm(false); onPrint?.(); navigate(ROUTES.ORDER_SUCCESS); };
+  const handleConfirmCancel = () => { setShowConfirm(false); };
 
   const baseButtonStyle = {
     flex: 1,
@@ -63,9 +56,9 @@ const GuestActions = ({ canPrint, onPrint, onCancel, reqId }) => {
     <>
       <ConfirmDialog
         visible={showConfirm}
-        message={`Confirm print for Request ID: ${reqId ?? "—"}?`}
-        yesLabel="Cancel"
-        noLabel="OK"
+        message={`${t("guest.confirmGuest")} ${t("guest.requestId")}: ${reqId ?? "—"}?`}
+        yesLabel={t("general.cancel")}
+        noLabel={t("general.ok")}
         onYes={handleConfirmCancel}
         onNo={handleConfirmOk}
       />
@@ -94,17 +87,11 @@ const GuestActions = ({ canPrint, onPrint, onCancel, reqId }) => {
             cursor: canPrint ? "pointer" : "not-allowed",
             opacity: canPrint ? 1 : 0.5,
           }}
-          onPointerDown={(e) => {
-            if (canPrint) handlePointerDown(e);
-          }}
-          onPointerUp={(e) => {
-            if (canPrint) handlePointerUp(e);
-          }}
-          onPointerLeave={(e) => {
-            if (canPrint) handlePointerUp(e);
-          }}
+          onPointerDown={(e) => { if (canPrint) handlePointerDown(e); }}
+          onPointerUp={(e) => { if (canPrint) handlePointerUp(e); }}
+          onPointerLeave={(e) => { if (canPrint) handlePointerUp(e); }}
         >
-          Print
+          {t("general.print")}
         </button>
 
         {/* ── Cancel ── */}
@@ -120,7 +107,7 @@ const GuestActions = ({ canPrint, onPrint, onCancel, reqId }) => {
           onPointerUp={handlePointerUpCancel}
           onPointerLeave={handlePointerUpCancel}
         >
-          Cancel
+          {t("general.cancel")}
         </button>
       </div>
     </>

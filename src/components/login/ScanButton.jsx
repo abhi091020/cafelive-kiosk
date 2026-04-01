@@ -1,8 +1,21 @@
-//src\components\login\ScanButton.jsx
+// src/components/login/ScanButton.jsx
+
 import PropTypes from "prop-types";
-import readyToScanImg from "@assets/readytoscan.svg";
+import { useTranslation } from "react-i18next";
+import readyToScanEn from "@assets/readytoscan.svg";
+import readyToScanHi from "@assets/ReadyToScanHindi.svg";
+import readyToScanMr from "@assets/ReadyToScanMarathi.svg";
+
+const SCAN_IMAGES = {
+  en: readyToScanEn,
+  hi: readyToScanHi,
+  mr: readyToScanMr,
+};
 
 const ScanButton = ({ onScan }) => {
+  const { i18n } = useTranslation();
+  const scanImg = SCAN_IMAGES[i18n.language] ?? readyToScanEn;
+
   return (
     <button
       onClick={onScan}
@@ -31,7 +44,7 @@ const ScanButton = ({ onScan }) => {
       }}
     >
       <img
-        src={readyToScanImg}
+        src={scanImg}
         alt="Ready To Scan"
         style={{
           width: "100%",

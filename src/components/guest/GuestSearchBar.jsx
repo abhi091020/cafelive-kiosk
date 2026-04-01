@@ -1,6 +1,7 @@
 // src/components/guest/GuestSearchBar.jsx
 
 import { useRef } from "react";
+import { useTranslation } from "react-i18next";
 import { NumPad } from "@components/shared";
 
 const SearchIcon = () => (
@@ -27,6 +28,7 @@ const GuestSearchBar = ({
   setShowNumPad,
   onEnter,
 }) => {
+  const { t } = useTranslation();
   const inputRef = useRef(null);
 
   const handlePointerDown = (e) => {
@@ -66,7 +68,7 @@ const GuestSearchBar = ({
         <input
           ref={inputRef}
           type="text"
-          placeholder="Search Guest Name*"
+          placeholder={`${t("guest.searchGuestName")}*`}
           value={value}
           onChange={(e) => onChange(e.target.value)}
           className="guest-searchbar-input"
@@ -79,7 +81,7 @@ const GuestSearchBar = ({
               onChange("");
               setShowNumPad(false);
             }}
-            aria-label="Clear search"
+            aria-label={t("general.clear")}
             className="guest-searchbar-clear"
           >
             ×
@@ -89,41 +91,32 @@ const GuestSearchBar = ({
 
       {showNumPad && (
         <>
-          {/* ── Submit / Cancel Buttons — same width as NumPad ── */}
           <div className="guest-numpad-actions">
             <button
               className="guest-numpad-submit"
-              onClick={() => {
-                if (value) onEnter();
-              }}
+              onClick={() => { if (value) onEnter(); }}
               onPointerDown={handlePointerDown}
               onPointerUp={handlePointerUp}
               onPointerLeave={handlePointerUp}
             >
-              Submit
+              {t("general.submit")}
             </button>
             <button
               className="guest-numpad-cancel"
-              onClick={() => {
-                onChange("");
-                setShowNumPad(false);
-              }}
+              onClick={() => { onChange(""); setShowNumPad(false); }}
               onPointerDown={handlePointerDownCancel}
               onPointerUp={handlePointerUpCancel}
               onPointerLeave={handlePointerUpCancel}
             >
-              Cancel
+              {t("general.cancel")}
             </button>
           </div>
 
-          {/* ── NumPad — stays dead center ── */}
           <div className="guest-numpad-wrapper">
             <NumPad
               value={value}
               onChange={onChange}
-              onEnter={() => {
-                if (value) onEnter();
-              }}
+              onEnter={() => { if (value) onEnter(); }}
             />
           </div>
         </>
@@ -169,9 +162,7 @@ const GuestSearchBar = ({
           cursor: text;
         }
 
-        .guest-searchbar-input::placeholder {
-          color: #AAAAAA;
-        }
+        .guest-searchbar-input::placeholder { color: #AAAAAA; }
 
         .guest-searchbar-clear {
           background: none;
@@ -187,11 +178,8 @@ const GuestSearchBar = ({
           transition: color 0.15s;
         }
 
-        .guest-searchbar-clear:hover {
-          color: #EA4D4E;
-        }
+        .guest-searchbar-clear:hover { color: #EA4D4E; }
 
-        /* NumPad stays exactly where it was — dead center */
         .guest-numpad-wrapper {
           position: absolute;
           top: 50%;
@@ -200,7 +188,6 @@ const GuestSearchBar = ({
           z-index: 20;
         }
 
-        /* Buttons — same width as NumPad (clamp(500px, 80vw, 800px)) */
         .guest-numpad-actions {
           position: absolute;
           top: calc(50% - clamp(280px, 38vh, 420px));

@@ -78,6 +78,7 @@
     "okGotIt": "ठीक है, समझ गया"
   },
   "guest": {
+    "srNo": "क्र. सं.",
     "guestMeal": "अतिथि भोजन बुकिंग",
     "searchGuestName": "अतिथि का नाम खोजें",
     "searchPlaceholder": "अतिथि का नाम टाइप करें...",

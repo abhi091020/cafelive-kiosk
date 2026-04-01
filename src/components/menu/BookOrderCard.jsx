@@ -42,126 +42,6 @@ const getCategoryKey = (mealTypeEnglishNames = "") => {
   return MEAL_TYPE_MAP[lower] || "meal";
 };
 
-// ─── Shift-required placeholder ───────────────────────────────────────────────
-const SelectShiftPlaceholder = ({ shifts, shiftsLoading, onShiftChange }) => {
-  const { t } = useTranslation();
-  const [open, setOpen] = useState(false);
-  const btnRef = useRef(null);
-  const [pos, setPos] = useState({ top: 0, left: 0 });
-
-  const handleOpen = () => {
-    const rect = btnRef.current?.getBoundingClientRect();
-    if (rect) setPos({ top: rect.bottom + 8, left: rect.left });
-    setOpen((p) => !p);
-  };
-
-  return (
-    <div
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        justifyContent: "center",
-        flex: 1,
-        minHeight: `calc(${SIDEBAR_HEIGHT} * 3)`,
-        gap: "16px",
-        padding: "32px",
-      }}
-    >
-      <button
-        ref={btnRef}
-        onClick={handleOpen}
-        disabled={shiftsLoading}
-        style={{
-          width: "clamp(300px, 45vw, 550px)",
-          padding: "clamp(0.8vh, 1.0vh, 1.2vh) 0",
-          border: "none",
-          borderRadius: "clamp(6px, 8px, 10px)",
-          fontSize: "clamp(2rem, 3.5vw, 2.8rem)",
-          fontWeight: 600,
-          color: "#FFFFFF",
-          cursor: shiftsLoading ? "wait" : "pointer",
-          outline: "none",
-          WebkitTapHighlightColor: "transparent",
-          transition: "transform 0.1s ease, opacity 0.1s ease",
-          letterSpacing: "0.02em",
-          backgroundColor: shiftsLoading ? "#E5E7EB" : "#EA4D4E",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          gap: "8px",
-        }}
-        onPointerDown={(e) => {
-          if (!shiftsLoading) {
-            e.currentTarget.style.transform = "scale(0.98)";
-            e.currentTarget.style.opacity = "0.9";
-            e.currentTarget.style.backgroundColor = "#CB0000";
-          }
-        }}
-        onPointerUp={(e) => {
-          e.currentTarget.style.transform = "scale(1)";
-          e.currentTarget.style.opacity = "1";
-          e.currentTarget.style.backgroundColor = "#EA4D4E";
-        }}
-        onPointerLeave={(e) => {
-          e.currentTarget.style.transform = "scale(1)";
-          e.currentTarget.style.opacity = "1";
-          e.currentTarget.style.backgroundColor = "#EA4D4E";
-        }}
-      >
-        {shiftsLoading ? t("general.loading") : t("menu.shiftSelection")}
-        {!shiftsLoading && <span style={{ fontSize: "0.75em" }}>▾</span>}
-      </button>
-
-      {open && !shiftsLoading && (
-        <>
-          <div onClick={() => setOpen(false)} style={{ position: "fixed", inset: 0, zIndex: 998 }} />
-          <div
-            style={{
-              position: "fixed",
-              top: pos.top,
-              left: pos.left,
-              background: "#FFFFFF",
-              border: "1.5px solid #E5E7EB",
-              borderRadius: "10px",
-              boxShadow: "0 4px 20px rgba(0,0,0,0.15)",
-              zIndex: 999,
-              minWidth: "180px",
-              overflow: "hidden",
-            }}
-          >
-            {shifts.map((s) => (
-              <button
-                key={s.shiftId}
-                onClick={() => { onShiftChange(s); setOpen(false); }}
-                style={{
-                  display: "block",
-                  width: "100%",
-                  padding: "16px 28px",
-                  background: "transparent",
-                  color: "#374151",
-                  fontWeight: 500,
-                  fontSize: "clamp(1.3rem, 2vw, 1.8rem)",
-                  border: "none",
-                  borderBottom: "1px solid #F3F4F6",
-                  cursor: "pointer",
-                  textAlign: "left",
-                  whiteSpace: "nowrap",
-                  transition: "background 0.15s",
-                }}
-                onMouseEnter={(e) => e.currentTarget.style.background = "#FEF2F2"}
-                onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}
-              >
-                {s.shiftName}
-              </button>
-            ))}
-          </div>
-        </>
-      )}
-    </div>
-  );
-};
-
 // ─── BookOrderCard ────────────────────────────────────────────────────────────
 const BookOrderCard = ({
   selectedItemIds = new Set(),
@@ -186,7 +66,6 @@ const BookOrderCard = ({
   const [menuLoading,    setMenuLoading]    = useState(true);
   const [menuDate,       setMenuDate]       = useState(null);
 
-  // ✅ NEW: mealTypeId → Firebase image URL map from getAllMeal
   const [mealImageMap,   setMealImageMap]   = useState({});
 
   const rightPanelRef = useRef(null);
@@ -203,26 +82,36 @@ const BookOrderCard = ({
     return cat.labelEn;
   };
 
-  // ── Fetch shifts ────────────────────────────────────────────────────────────
+  // ── Fetch shifts + auto-select Morning Shift ────────────────────────────────
   useEffect(() => {
     getShifts()
-      .then(setShifts)
-      .catch(() =>
-        setShifts([
+      .then((data) => {
+        setShifts(data);
+
+        // ✅ Auto-select Morning Shift (or first shift as fallback)
+        const morning = data.find((s) =>
+          s.shiftName?.toLowerCase().includes("morning")
+        ) ?? data[0];
+
+        if (morning) onShiftChange(morning);
+      })
+      .catch(() => {
+        const fallback = [
           { shiftId: 1, shiftName: "1st Shift" },
           { shiftId: 2, shiftName: "2nd Shift" },
           { shiftId: 3, shiftName: "3rd Shift" },
           { shiftId: 4, shiftName: "General Shift" },
-        ]),
-      )
+        ];
+        setShifts(fallback);
+        onShiftChange(fallback[0]); // ✅ fallback to first shift
+      })
       .finally(() => setShiftsLoading(false));
   }, []);
 
-  // ✅ NEW: Fetch meal types from getAllMeal → build mealTypeId → image map
+  // ── Fetch meal types ────────────────────────────────────────────────────────
   useEffect(() => {
     getMealTypes()
       .then((mealTypes) => {
-        // e.g. { 1: "https://firebase.../lunch.jpg", 2: "https://firebase.../snacks.jpg" }
         const map = {};
         mealTypes.forEach((mt) => {
           if (mt.mealTypeId && mt.mealImage) {
@@ -232,7 +121,6 @@ const BookOrderCard = ({
         setMealImageMap(map);
       })
       .catch(() => {
-        // silently fall back to local icons — not a blocking error
         console.warn("[BookOrderCard] getMealTypes failed, using fallback icons");
       });
   }, []);
@@ -243,8 +131,6 @@ const BookOrderCard = ({
 
     getMenu(branchId)
       .then((rawItems) => {
-        // createdOn filter removed — it's a DB creation date, not a serve date
-        // weekDay already controls availability
         const active = rawItems.filter((item) => {
           if (!item.status) return false;
           const days = item.weekDay?.split(",").map((d) => d.trim()) ?? [];
@@ -264,13 +150,12 @@ const BookOrderCard = ({
 
           if (!catMeta[catKey]) {
             catMeta[catKey] = {
-              key:     catKey,
-              labelEn: item.mealTypeEnglishNames,
-              labelHi: item.mealTypeHindiNames,
-              labelMr: item.mealTypeMarathiNames,
-              // ✅ store mealTypeIds so sidebar can look up Firebase image later
+              key:       catKey,
+              labelEn:   item.mealTypeEnglishNames,
+              labelHi:   item.mealTypeHindiNames,
+              labelMr:   item.mealTypeMarathiNames,
               mealTypeId: String(item.mealTypeIds),
-              sortId:  typeId,
+              sortId:    typeId,
             };
             catOrder.push(catKey);
           }
@@ -304,7 +189,6 @@ const BookOrderCard = ({
       .finally(() => setMenuLoading(false));
   }, [branchId]);
 
-  // ✅ NEW: resolve sidebar icon — Firebase image from getAllMeal, fallback to local PNG
   const getCatIcon = (cat) => {
     const firebaseImg = mealImageMap[cat.mealTypeId];
     if (firebaseImg) return firebaseImg;
@@ -361,6 +245,7 @@ const BookOrderCard = ({
           )}
         </div>
 
+        {/* ── Shift pill — always visible since shift is auto-selected ── */}
         {shift && (
           <div>
             <button
@@ -444,198 +329,166 @@ const BookOrderCard = ({
       </div>
 
       {/* ══ BODY ════════════════════════════════════════════════════════════ */}
-      {!shift ? (
-        <div style={{ borderRadius: "0 0 10px 10px", overflow: "hidden" }}>
-          <SelectShiftPlaceholder
-            shifts={shifts}
-            shiftsLoading={shiftsLoading}
-            onShiftChange={onShiftChange}
-          />
-        </div>
-      ) : (
-        <div style={{ display: "flex", alignItems: "flex-start", borderRadius: "0 0 10px 10px", overflow: "hidden" }}>
+      <div style={{ display: "flex", alignItems: "flex-start", borderRadius: "0 0 10px 10px", overflow: "hidden" }}>
 
-          {/* ── LEFT SIDEBAR ─────────────────────────────────────────────── */}
-          <div
-            style={{
-              width: "26.41%",
-              flexShrink: 0,
-              borderRight: "1px solid #F3F4F6",
-              display: "flex",
-              flexDirection: "column",
-            }}
-          >
-            {menuLoading
-              ? [1, 2, 3].map((n) => (
-                  <div
-                    key={n}
+        {/* ── LEFT SIDEBAR ─────────────────────────────────────────────── */}
+        <div
+          style={{
+            width: "26.41%",
+            flexShrink: 0,
+            borderRight: "1px solid #F3F4F6",
+            display: "flex",
+            flexDirection: "column",
+          }}
+        >
+          {menuLoading
+            ? [1, 2, 3].map((n) => (
+                <div
+                  key={n}
+                  style={{
+                    height: SIDEBAR_HEIGHT,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    borderBottom: "1px solid #F3F4F6",
+                    opacity: 0.4,
+                  }}
+                >
+                  <div style={{ width: 60, height: 60, borderRadius: "50%", background: "#E5E7EB" }} />
+                </div>
+              ))
+            : categories.map((cat, idx, arr) => (
+                <div
+                  key={cat.key}
+                  onClick={() => handleCategoryChange(cat.key)}
+                  style={{
+                    height: SIDEBAR_HEIGHT,
+                    flexShrink: 0,
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    padding: "16px 0",
+                    borderLeft: activeCategory === cat.key ? "3px solid #B91C1C" : "3px solid transparent",
+                    background: activeCategory === cat.key ? "#FFF0F0" : "transparent",
+                    borderBottom: idx < arr.length - 1 ? "1px solid #F3F4F6" : "none",
+                    cursor: "pointer",
+                    transition: "background 0.15s",
+                  }}
+                >
+                  <img
+                    src={getCatIcon(cat)}
+                    alt={getCatLabel(cat)}
+                    style={{ width: IMG_SIZE, height: IMG_SIZE, objectFit: "contain" }}
+                    onError={(e) => { e.target.src = FALLBACK_ICON[cat.key] || MealIcon; }}
+                  />
+                  <p
                     style={{
-                      height: SIDEBAR_HEIGHT,
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      borderBottom: "1px solid #F3F4F6",
-                      opacity: 0.4,
+                      fontSize: "clamp(1.2rem, 2vw, 1.7rem)",
+                      fontWeight: activeCategory === cat.key ? 700 : 500,
+                      color: activeCategory === cat.key ? "#B91C1C" : "#1F2937",
+                      margin: "8px 0 0 0",
+                      textAlign: "center",
+                      transition: "color 0.15s",
                     }}
                   >
-                    <div style={{ width: 60, height: 60, borderRadius: "50%", background: "#E5E7EB" }} />
-                  </div>
-                ))
-              : categories.map((cat, idx, arr) => (
-                  <div
-                    key={cat.key}
-                    onClick={() => handleCategoryChange(cat.key)}
-                    style={{
-                      height: SIDEBAR_HEIGHT,
-                      flexShrink: 0,
-                      display: "flex",
-                      flexDirection: "column",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      padding: "16px 0",
-                      borderLeft: activeCategory === cat.key ? "3px solid #B91C1C" : "3px solid transparent",
-                      background: activeCategory === cat.key ? "#FFF0F0" : "transparent",
-                      borderBottom: idx < arr.length - 1 ? "1px solid #F3F4F6" : "none",
-                      cursor: "pointer",
-                      transition: "background 0.15s",
-                    }}
-                  >
-                    {/* ✅ NEW: Firebase image from getAllMeal, fallback to local PNG */}
-                    <img
-                      src={getCatIcon(cat)}
-                      alt={getCatLabel(cat)}
-                      style={{ width: IMG_SIZE, height: IMG_SIZE, objectFit: "contain" }}
-                      onError={(e) => {
-                        // if Firebase URL fails, fall back to local PNG
-                        e.target.src = FALLBACK_ICON[cat.key] || MealIcon;
-                      }}
-                    />
+                    {getCatLabel(cat)}
+                  </p>
+                </div>
+              ))}
+        </div>
+
+        {/* ── RIGHT PANEL ──────────────────────────────────────────────── */}
+        <div
+          ref={rightPanelRef}
+          className="menu-right-scroll"
+          style={{
+            flex: 1,
+            background: "#FFFFFF",
+            maxHeight: `calc(${SIDEBAR_HEIGHT} * 3)`,
+            overflowY: "auto",
+            overflowX: "hidden",
+          }}
+        >
+          {menuLoading && (
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: ROW_HEIGHT }}>
+              <p style={{ color: "#9CA3AF", fontSize: "1.1rem" }}>Loading menu...</p>
+            </div>
+          )}
+
+          {!menuLoading && items.length === 0 && (
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: ROW_HEIGHT }}>
+              <p style={{ color: "#9CA3AF", fontSize: "1.1rem" }}>No items available</p>
+            </div>
+          )}
+
+          {!menuLoading && items.map((item, index) => {
+            const isSelected = selectedItemIds.has(item.id);
+            return (
+              <div key={item.id}>
+                <div
+                  onClick={() => onItemToggle?.(item)}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    height: ROW_HEIGHT,
+                    paddingLeft: "32px",
+                    paddingRight: "20px",
+                    gap: "18px",
+                    boxSizing: "border-box",
+                    cursor: "pointer",
+                    background: isSelected ? "#FEF2F2" : "transparent",
+                    transition: "background 0.15s",
+                    userSelect: "none",
+                  }}
+                >
+                  <img
+                    src={item.img}
+                    alt={item.nameEn}
+                    style={{ width: IMG_SIZE, height: IMG_SIZE, objectFit: "contain", flexShrink: 0, borderRadius: "8px" }}
+                    onError={(e) => { e.target.style.display = "none"; }}
+                  />
+
+                  <div style={{ flex: 1 }}>
                     <p
                       style={{
-                        fontSize: "clamp(1.2rem, 2vw, 1.7rem)",
-                        fontWeight: activeCategory === cat.key ? 700 : 500,
-                        color: activeCategory === cat.key ? "#B91C1C" : "#1F2937",
-                        margin: "8px 0 0 0",
-                        textAlign: "center",
-                        transition: "color 0.15s",
+                        margin: item.desc ? "0 0 6px 0" : 0,
+                        fontSize: "clamp(1.3rem, 2.2vw, 1.85rem)",
+                        fontWeight: 700,
+                        color: isSelected ? "#B91C1C" : "#A50000",
+                        lineHeight: 1.3,
                       }}
                     >
-                      {getCatLabel(cat)}
+                      {getItemName(item)}
                     </p>
-                  </div>
-                ))}
-          </div>
-
-          {/* ── RIGHT PANEL ──────────────────────────────────────────────── */}
-          <div
-            ref={rightPanelRef}
-            className="menu-right-scroll"
-            style={{
-              flex: 1,
-              background: "#FFFFFF",
-              maxHeight: `calc(${SIDEBAR_HEIGHT} * 3)`,
-              overflowY: "auto",
-              overflowX: "hidden",
-            }}
-          >
-            {menuLoading && (
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: ROW_HEIGHT }}>
-                <p style={{ color: "#9CA3AF", fontSize: "1.1rem" }}>Loading menu...</p>
-              </div>
-            )}
-
-            {!menuLoading && items.length === 0 && (
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: ROW_HEIGHT }}>
-                <p style={{ color: "#9CA3AF", fontSize: "1.1rem" }}>No items available</p>
-              </div>
-            )}
-
-            {!menuLoading && items.map((item, index) => {
-              const isSelected = selectedItemIds.has(item.id);
-              return (
-                <div key={item.id}>
-                  <div
-                    onClick={() => onItemToggle?.(item)}
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      height: ROW_HEIGHT,
-                      paddingLeft: "32px",
-                      paddingRight: "20px",
-                      gap: "18px",
-                      boxSizing: "border-box",
-                      cursor: "pointer",
-                      background: isSelected ? "#FEF2F2" : "transparent",
-                      transition: "background 0.15s",
-                      userSelect: "none",
-                    }}
-                  >
-                    <img
-                      src={item.img}
-                      alt={item.nameEn}
-                      style={{
-                        width: IMG_SIZE,
-                        height: IMG_SIZE,
-                        objectFit: "contain",
-                        flexShrink: 0,
-                        borderRadius: "8px",
-                      }}
-                      onError={(e) => { e.target.style.display = "none"; }}
-                    />
-
-                    <div style={{ flex: 1 }}>
-                      <p
-                        style={{
-                          margin: item.desc ? "0 0 6px 0" : 0,
-                          fontSize: "clamp(1.3rem, 2.2vw, 1.85rem)",
-                          fontWeight: 700,
-                          color: isSelected ? "#B91C1C" : "#A50000",
-                          lineHeight: 1.3,
-                        }}
-                      >
-                        {getItemName(item)}
+                    {item.desc && (
+                      <p style={{ margin: 0, fontSize: "clamp(1rem, 1.6vw, 1.4rem)", color: "#676666", lineHeight: 1.5 }}>
+                        {item.desc}
                       </p>
-                      {item.desc && (
-                        <p
-                          style={{
-                            margin: 0,
-                            fontSize: "clamp(1rem, 1.6vw, 1.4rem)",
-                            color: "#676666",
-                            lineHeight: 1.5,
-                          }}
-                        >
-                          {item.desc}
-                        </p>
-                      )}
-                    </div>
-
-                    {isSelected && (
-                      <div
-                        style={{
-                          width: "22px",
-                          height: "22px",
-                          borderRadius: "50%",
-                          background: "#B91C1C",
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          flexShrink: 0,
-                        }}
-                      >
-                        <span style={{ color: "#fff", fontSize: "13px", fontWeight: 700 }}>✓</span>
-                      </div>
                     )}
                   </div>
 
-                  {index < items.length - 1 && (
-                    <div style={{ height: "1px", background: "rgba(0,0,0,0.1)", margin: "0 20px" }} />
+                  {isSelected && (
+                    <div
+                      style={{
+                        width: "22px", height: "22px", borderRadius: "50%",
+                        background: "#B91C1C", display: "flex", alignItems: "center",
+                        justifyContent: "center", flexShrink: 0,
+                      }}
+                    >
+                      <span style={{ color: "#fff", fontSize: "13px", fontWeight: 700 }}>✓</span>
+                    </div>
                   )}
                 </div>
-              );
-            })}
-          </div>
+
+                {index < items.length - 1 && (
+                  <div style={{ height: "1px", background: "rgba(0,0,0,0.1)", margin: "0 20px" }} />
+                )}
+              </div>
+            );
+          })}
         </div>
-      )}
+      </div>
     </div>
   );
 };

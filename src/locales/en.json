@@ -78,6 +78,7 @@
     "okGotIt": "OK, Got it"
   },
   "guest": {
+    "srNo": "Sr. No.",  
     "guestMeal": "Guest Meal Booking",
     "searchGuestName": "Search Guest Name",
     "searchPlaceholder": "Type guest name...",

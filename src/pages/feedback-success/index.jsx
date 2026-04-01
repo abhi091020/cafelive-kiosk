@@ -2,21 +2,26 @@
 
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { Header, Footer } from "@common";
 import successFeedImg from "@assets/successfeed.png";
-import thankYouSvg from "@assets/thankyou.svg";
-import subtitleSvg from "@assets/feedbacksubtitle.svg";
+
+// ── Thank You images ──────────────────────────────────────────────────────────
+import thankYouEn from "@assets/thankyou.svg";
+import thankYouHiMr from "@assets/thankumarathi.png"; // shared for Hindi + Marathi
+
+// ── Subtitle images ───────────────────────────────────────────────────────────
+import subtitleEn from "@assets/feedbacksubtitle.svg";
+import subtitleHi from "@assets/feedbacksubtitlehindi.png";
+import subtitleMr from "@assets/feedbacksubtitlemarathi.png";
+
+const THANK_YOU_IMAGES = { en: thankYouEn, hi: thankYouHiMr, mr: thankYouHiMr };
+const SUBTITLE_IMAGES  = { en: subtitleEn, hi: subtitleHi,   mr: subtitleMr   };
 
 // ─── Confetti ─────────────────────────────────────────────────────────────────
 const CONFETTI_COLORS = [
-  "#EA4D4E",
-  "#B91C1C",
-  "#FFD700",
-  "#4CAF50",
-  "#2196F3",
-  "#FF9800",
-  "#E91E63",
-  "#00BCD4",
+  "#EA4D4E", "#B91C1C", "#FFD700", "#4CAF50",
+  "#2196F3", "#FF9800", "#E91E63", "#00BCD4",
 ];
 
 const ConfettiPiece = ({ style }) => <div style={style} />;
@@ -44,8 +49,14 @@ const generateConfetti = (count = 60) =>
 // ─── FeedbackSuccessPage ──────────────────────────────────────────────────────
 const FeedbackSuccessPage = () => {
   const navigate = useNavigate();
+  const { i18n } = useTranslation();
+  const lang = i18n.language;
+
   const [countdown, setCountdown] = useState(5);
   const [confetti] = useState(() => generateConfetti(70));
+
+  const thankYouImg = THANK_YOU_IMAGES[lang] ?? thankYouEn;
+  const subtitleImg = SUBTITLE_IMAGES[lang]  ?? subtitleEn;
 
   useEffect(() => {
     if (countdown <= 0) {
@@ -96,21 +107,19 @@ const FeedbackSuccessPage = () => {
             width: "min(72vw, 720px)",
             height: "min(72vw, 720px)",
             borderRadius: "50%",
-            background:
-              "radial-gradient(circle, rgba(234,77,78,0.10) 0%, rgba(234,77,78,0) 70%)",
+            background: "radial-gradient(circle, rgba(234,77,78,0.10) 0%, rgba(234,77,78,0) 70%)",
             animation: "pulseRing 2.4s ease-in-out infinite",
             pointerEvents: "none",
             zIndex: 0,
           }}
         />
 
-        {/* Illustration */}
+        {/* Illustration — unchanged */}
         <div
           style={{
             position: "relative",
             zIndex: 1,
-            animation:
-              "popIn 0.55s cubic-bezier(0.175, 0.885, 0.32, 1.275) both",
+            animation: "popIn 0.55s cubic-bezier(0.175, 0.885, 0.32, 1.275) both",
           }}
         >
           <img
@@ -126,9 +135,9 @@ const FeedbackSuccessPage = () => {
           />
         </div>
 
-        {/* "Thank you!" SVG */}
+        {/* "Thank you!" — language aware */}
         <img
-          src={thankYouSvg}
+          src={thankYouImg}
           alt="Thank you!"
           style={{
             width: "clamp(200px, 30vw, 310px)",
@@ -138,9 +147,9 @@ const FeedbackSuccessPage = () => {
           }}
         />
 
-        {/* Subtitle SVG */}
+        {/* Subtitle — language aware */}
         <img
-          src={subtitleSvg}
+          src={subtitleImg}
           alt="Your feedback has been submitted successfully."
           style={{
             width: "clamp(320px, 55vw, 710px)",

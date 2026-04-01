@@ -1,5 +1,7 @@
 // src/components/guest/GuestTable.jsx
 
+import { useTranslation } from "react-i18next";
+
 const ROWS = 15;
 
 const PLACEHOLDER_IDS = [
@@ -7,101 +9,59 @@ const PLACEHOLDER_IDS = [
   5432, 1357,
 ];
 const PLACEHOLDER_NAMES = [
-  "Rahul Pardeshi",
-  "Tushar Kumavat",
-  "Saurabh Bhalerao",
-  "Pratik Patil",
-  "Ketan Patil",
-  "Lalit Beldar",
-  "Amit Sharma",
-  "Rohan Desai",
-  "Nikhil Jadhav",
-  "Sachin More",
-  "Vishal Kulkarni",
-  "Priya Nair",
-  "Deepak Yadav",
-  "Sneha Joshi",
-  "Manoj Tiwari",
+  "Rahul Pardeshi", "Tushar Kumavat", "Saurabh Bhalerao", "Pratik Patil",
+  "Ketan Patil", "Lalit Beldar", "Amit Sharma", "Rohan Desai",
+  "Nikhil Jadhav", "Sachin More", "Vishal Kulkarni", "Priya Nair",
+  "Deepak Yadav", "Sneha Joshi", "Manoj Tiwari",
 ];
 const PLACEHOLDER_COMPANIES = [
-  "Hatts Of Digital",
-  "Daccess Security System",
-  "Brawizz Tech Pvt",
-  "TATA",
-  "Bosch",
-  "Suprim Pvt",
-  "Infosys",
-  "Wipro",
-  "HCL Technologies",
-  "Tech Mahindra",
-  "Cognizant",
-  "Capgemini",
-  "L&T Infotech",
-  "Persistent Systems",
-  "Mphasis",
+  "Hatts Of Digital", "Daccess Security System", "Brawizz Tech Pvt", "TATA",
+  "Bosch", "Suprim Pvt", "Infosys", "Wipro", "HCL Technologies",
+  "Tech Mahindra", "Cognizant", "Capgemini", "L&T Infotech",
+  "Persistent Systems", "Mphasis",
 ];
 const PLACEHOLDER_HOSTS = [
-  "Pratik Kale",
-  "Tushar Patil",
-  "Raj Shinde",
-  "Jignesh Roy",
-  "Pratik Kale",
-  "Pratik Kale",
-  "Sanjay Mehta",
-  "Vikram Nair",
-  "Anita Kulkarni",
-  "Suresh Yadav",
-  "Ravi Sharma",
-  "Pooja Desai",
-  "Anil Joshi",
-  "Kavita More",
-  "Rahul Singh",
+  "Pratik Kale", "Tushar Patil", "Raj Shinde", "Jignesh Roy", "Pratik Kale",
+  "Pratik Kale", "Sanjay Mehta", "Vikram Nair", "Anita Kulkarni",
+  "Suresh Yadav", "Ravi Sharma", "Pooja Desai", "Anil Joshi",
+  "Kavita More", "Rahul Singh",
 ];
 const PLACEHOLDER_DEPTS = [
-  "IT Department",
-  "Sales Department",
-  "IT Department",
-  "IT Department",
-  "IT Department",
-  "IT Department",
-  "HR Department",
-  "Finance Department",
-  "IT Department",
-  "Operations",
-  "Marketing",
-  "IT Department",
-  "Admin Department",
-  "Sales Department",
-  "IT Department",
+  "IT Department", "Sales Department", "IT Department", "IT Department",
+  "IT Department", "IT Department", "HR Department", "Finance Department",
+  "IT Department", "Operations", "Marketing", "IT Department",
+  "Admin Department", "Sales Department", "IT Department",
 ];
 
 const ALL_ROWS = Array.from({ length: ROWS }).map((_, idx) => ({
-  id: PLACEHOLDER_IDS[idx],
-  name: PLACEHOLDER_NAMES[idx],
+  id:      PLACEHOLDER_IDS[idx],
+  name:    PLACEHOLDER_NAMES[idx],
   company: PLACEHOLDER_COMPANIES[idx],
-  host: PLACEHOLDER_HOSTS[idx],
-  dept: PLACEHOLDER_DEPTS[idx],
+  host:    PLACEHOLDER_HOSTS[idx],
+  dept:    PLACEHOLDER_DEPTS[idx],
 }));
 
 const GuestTable = ({ selectedId, onSelect, search = "" }) => {
-  const filtered = ALL_ROWS.filter((row) => {
-    return String(row.id).startsWith(search);
-  });
+  const { t } = useTranslation();
+
+  const filtered = ALL_ROWS.filter((row) =>
+    String(row.id).startsWith(search)
+  );
 
   return (
     <>
       <div className="guest-table-wrapper">
         {/* ── Header ── */}
         <div className="guest-table-header">
-          <span className="guest-th">Sr. No.</span>
-          <span className="guest-th">Request ID</span>
-          <span className="guest-th">Guest Details</span>
-          <span className="guest-th">Host Details</span>
+          <span className="guest-th">{t("guest.srNo")}</span>
+          <span className="guest-th">{t("guest.requestId")}</span>
+          <span className="guest-th">{t("guest.guestDetails")}</span>
+          <span className="guest-th">{t("guest.hostDetails")}</span>
         </div>
 
         {/* ── Rows ── */}
         {filtered.length === 0 ? (
-          <div className="guest-table-empty">No results found</div>
+          <div className="guest-table-empty">{t("guest.noGuestsFound")}</div>
         ) : (
           filtered.map((row, idx) => (
             <div
@@ -172,17 +132,9 @@ const GuestTable = ({ selectedId, onSelect, search = "" }) => {
           transition: background 0.15s;
         }
 
-        .guest-table-row:last-child {
-          border-bottom: none;
-        }
-
-        .guest-table-row:hover {
-          background: rgba(234, 77, 78, 0.05);
-        }
-
-        .guest-table-row--selected {
-          background: rgba(234, 77, 78, 0.12) !important;
-        }
+        .guest-table-row:last-child { border-bottom: none; }
+        .guest-table-row:hover { background: rgba(234, 77, 78, 0.05); }
+        .guest-table-row--selected { background: rgba(234, 77, 78, 0.12) !important; }
 
         .guest-td-num {
           color: #570000;
