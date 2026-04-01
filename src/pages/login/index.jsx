@@ -38,8 +38,8 @@ const LoginPage = () => {
       } else {
         // ── SINGLE TAP → Employee Home ──
         const mockUser = {
-          id: "1103467",
-          employeeId: "1103467",
+          id: "2",
+          employeeId: "2",
           name: "Aakash Shirke",
           department: "Staff Executive",
           shift: "Morning",

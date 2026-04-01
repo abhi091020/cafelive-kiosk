@@ -1,13 +1,9 @@
-// src\services\api\axiosInstance.js
+// src/services/api/axiosInstance.js
 
 import axios from "axios";
 
-// ─── Constants ────────────────────────────────────────────────────────────────
-
-const API_TIMEOUT_MS = 10_000; // 10 seconds — per documentation spec
-const AUTH_TOKEN_KEY = "cafelive_token"; // sessionStorage key for JWT
-
-// ─── Create Instance ──────────────────────────────────────────────────────────
+const API_TIMEOUT_MS = 10_000;
+const AUTH_TOKEN_KEY = "cafelive_token";
 
 const axiosInstance = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL,
@@ -22,13 +18,9 @@ const axiosInstance = axios.create({
 
 axiosInstance.interceptors.request.use(
   (config) => {
-    // Attach auth token:
-    // 1. Check sessionStorage first (runtime login token)
-    // 2. Fallback to .env token (VITE_CAFELIVE_TOKEN)
     const token =
       sessionStorage.getItem(AUTH_TOKEN_KEY) ||
       import.meta.env.VITE_CAFELIVE_TOKEN;
-      console.log("Token being sent:", token ? token.substring(0, 20) + "..." : "NO TOKEN");
 
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
@@ -63,40 +55,29 @@ axiosInstance.interceptors.response.use(
   },
   (error) => {
     const status = error.response?.status;
-    const url = error.config?.url ?? "unknown";
-
-    // ── Map HTTP status → i18n error key ─────────────────────────────────
-    // Error keys match keys in errors{} section of en.json.
-    // Screens use these keys with t(`errors.${errorKey}`) to show messages.
+    const url    = error.config?.url ?? "unknown";
 
     let errorKey = "unknownError";
 
     if (!error.response) {
-      // No response — network down or request timed out
       errorKey = error.code === "ECONNABORTED" ? "apiTimeout" : "networkError";
     } else {
       switch (status) {
-        case 401:
-          errorKey = "sessionExpired";
-          break;
-        case 409:
-          errorKey = "alreadyBooked";
-          break; // Meal already booked for shift
-        case 503:
-          errorKey = "networkError";
-          break;
-        default:
-          errorKey = "unknownError";
-          break;
+        case 401: errorKey = "sessionExpired"; break;
+        case 409: errorKey = "alreadyBooked";  break;
+        case 500: errorKey = "serverError";    break;
+        case 503: errorKey = "networkError";   break;
+        default:  errorKey = "unknownError";   break;
       }
     }
 
-    // Attach structured info to the error for consuming API functions
     const enriched = new Error(errorKey);
-    enriched.errorKey = errorKey;
-    enriched.status = status ?? null;
-    enriched.url = url;
-    enriched.original = error;
+    enriched.errorKey      = errorKey;
+    enriched.status        = status ?? null;
+    enriched.url           = url;
+    enriched.original      = error;
+    // ✅ ADDED: attach backend message so UI can show it directly
+    enriched.serverMessage = error.response?.data?.message ?? null;
 
     if (import.meta.env.VITE_DEV_MODE === "true") {
       console.error(`[API ✕] ${status ?? "NO_RESPONSE"} ${url} →`, errorKey);

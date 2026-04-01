@@ -114,3 +114,23 @@ export const getMenu = async (branchId = null) => {
   );
   return response.data.result;
 };
+// ─── getMealTypes ─────────────────────────────────────────────────────────────
+
+/**
+ * getMealTypes — fetch meal categories from GET /meal/getAllMeal
+ * Returns: [{ mealTypeId, mealEnglishName, mealHindiName, mealMarathiName,
+ *             mealImage, branchId, branchName, startTime, endTime, validDays }]
+ */
+export const getMealTypes = async () => {
+  if (import.meta.env.VITE_DEV_MODE === "true") {
+    await new Promise((r) => setTimeout(r, 300));
+    return [
+      { mealTypeId: 1, mealEnglishName: "Lunch",      mealHindiName: "दोपहर का खाना", mealMarathiName: "दुपारचे जेवण", mealImage: "", branchId: 1 },
+      { mealTypeId: 2, mealEnglishName: "Snacks",     mealHindiName: "नाश्ता",         mealMarathiName: "नाश्ता",        mealImage: "", branchId: 1 },
+      { mealTypeId: 3, mealEnglishName: "Tea/Coffee", mealHindiName: "चाय/कॉफी",       mealMarathiName: "चहा/कॉफी",     mealImage: "", branchId: 1 },
+    ];
+  }
+
+  const response = await axiosInstance.get("/meal/getAllMeal");
+  return response.data.result;
+};

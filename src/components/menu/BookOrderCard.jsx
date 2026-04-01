@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { useUser } from "@context/UserContext";
-import { getShifts, getMenu } from "@services/api/menuAPI";
+import { getShifts, getMenu, getMealTypes } from "@services/api/menuAPI";
 
 import MealIcon   from "@assets/meal/meal.png";
 import SnacksIcon from "@assets/meal/snacks.png";
@@ -17,6 +17,13 @@ const IMG_SIZE       = "clamp(85px, 11.5vh, 135px)";
 const DAY_NAMES = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
 const getTodayName = () => DAY_NAMES[new Date().getDay()];
 
+// ─── Fallback icons per category key ─────────────────────────────────────────
+const FALLBACK_ICON = {
+  meal:       MealIcon,
+  snacks:     SnacksIcon,
+  tea_coffee: TeaIcon,
+};
+
 // ─── Map API mealTypeEnglishNames → sidebar category key ─────────────────────
 const MEAL_TYPE_MAP = {
   lunch:        "meal",
@@ -28,13 +35,6 @@ const MEAL_TYPE_MAP = {
   tea:          "tea_coffee",
   coffee:       "tea_coffee",
   "tea/coffee": "tea_coffee",
-};
-
-// ─── Map category key → icon ──────────────────────────────────────────────────
-const ICON_MAP = {
-  meal:       MealIcon,
-  snacks:     SnacksIcon,
-  tea_coffee: TeaIcon,
 };
 
 const getCategoryKey = (mealTypeEnglishNames = "") => {
@@ -68,7 +68,6 @@ const SelectShiftPlaceholder = ({ shifts, shiftsLoading, onShiftChange }) => {
         padding: "32px",
       }}
     >
-      {/* Select Shift button — same style as ActionButtons */}
       <button
         ref={btnRef}
         onClick={handleOpen}
@@ -114,7 +113,6 @@ const SelectShiftPlaceholder = ({ shifts, shiftsLoading, onShiftChange }) => {
         {!shiftsLoading && <span style={{ fontSize: "0.75em" }}>▾</span>}
       </button>
 
-      {/* Fixed dropdown */}
       {open && !shiftsLoading && (
         <>
           <div onClick={() => setOpen(false)} style={{ position: "fixed", inset: 0, zIndex: 998 }} />
@@ -135,7 +133,7 @@ const SelectShiftPlaceholder = ({ shifts, shiftsLoading, onShiftChange }) => {
             {shifts.map((s) => (
               <button
                 key={s.shiftId}
-                onClick={() => { onShiftChange(s.shiftName); setOpen(false); }}
+                onClick={() => { onShiftChange(s); setOpen(false); }}
                 style={{
                   display: "block",
                   width: "100%",
@@ -172,9 +170,8 @@ const BookOrderCard = ({
   onShiftChange,
 }) => {
   const { i18n } = useTranslation();
-  const lang = i18n.language; // "en" | "hi" | "mr"
+  const lang = i18n.language;
 
-  // ✅ Get branchId from user session
   const { user } = useUser();
   const branchId = user?.branchId ?? null;
 
@@ -187,18 +184,19 @@ const BookOrderCard = ({
   const shiftBtnRef = useRef(null);
   const [menuItems,      setMenuItems]      = useState({});
   const [menuLoading,    setMenuLoading]    = useState(true);
-  const [menuDate,       setMenuDate]       = useState(null); // from createdOn
+  const [menuDate,       setMenuDate]       = useState(null);
+
+  // ✅ NEW: mealTypeId → Firebase image URL map from getAllMeal
+  const [mealImageMap,   setMealImageMap]   = useState({});
 
   const rightPanelRef = useRef(null);
 
-  // ✅ Language-aware item name
   const getItemName = (item) => {
     if (lang === "hi" && item.nameHi) return item.nameHi;
     if (lang === "mr" && item.nameMr) return item.nameMr;
     return item.nameEn;
   };
 
-  // ✅ Language-aware category label
   const getCatLabel = (cat) => {
     if (lang === "hi" && cat.labelHi) return cat.labelHi;
     if (lang === "mr" && cat.labelMr) return cat.labelMr;
@@ -215,27 +213,42 @@ const BookOrderCard = ({
           { shiftId: 2, shiftName: "2nd Shift" },
           { shiftId: 3, shiftName: "3rd Shift" },
           { shiftId: 4, shiftName: "General Shift" },
-        ])
+        ]),
       )
       .finally(() => setShiftsLoading(false));
+  }, []);
+
+  // ✅ NEW: Fetch meal types from getAllMeal → build mealTypeId → image map
+  useEffect(() => {
+    getMealTypes()
+      .then((mealTypes) => {
+        // e.g. { 1: "https://firebase.../lunch.jpg", 2: "https://firebase.../snacks.jpg" }
+        const map = {};
+        mealTypes.forEach((mt) => {
+          if (mt.mealTypeId && mt.mealImage) {
+            map[String(mt.mealTypeId)] = mt.mealImage;
+          }
+        });
+        setMealImageMap(map);
+      })
+      .catch(() => {
+        // silently fall back to local icons — not a blocking error
+        console.warn("[BookOrderCard] getMealTypes failed, using fallback icons");
+      });
   }, []);
 
   // ── Fetch menu ──────────────────────────────────────────────────────────────
   useEffect(() => {
     const today = getTodayName();
-    const todayDate = new Date().toISOString().split("T")[0]; // YYYY-MM-DD
 
-    // ✅ Pass branchId to API
     getMenu(branchId)
       .then((rawItems) => {
+        // createdOn filter removed — it's a DB creation date, not a serve date
+        // weekDay already controls availability
         const active = rawItems.filter((item) => {
           if (!item.status) return false;
-
           const days = item.weekDay?.split(",").map((d) => d.trim()) ?? [];
           if (!days.includes(today)) return false;
-
-          if (item.createdOn && item.createdOn !== todayDate) return false;
-
           return true;
         });
 
@@ -244,19 +257,20 @@ const BookOrderCard = ({
         const catOrder = [];
 
         active.forEach((item) => {
-          const catKey  = getCategoryKey(item.mealTypeEnglishNames);
-          const typeId  = parseInt(item.mealTypeIds, 10) || 999;
+          const catKey = getCategoryKey(item.mealTypeEnglishNames);
+          const typeId = parseInt(item.mealTypeIds, 10) || 999;
 
           if (!grouped[catKey]) grouped[catKey] = [];
 
           if (!catMeta[catKey]) {
             catMeta[catKey] = {
-              key:      catKey,
-              labelEn:  item.mealTypeEnglishNames,
-              labelHi:  item.mealTypeHindiNames,
-              labelMr:  item.mealTypeMarathiNames,
-              src:      ICON_MAP[catKey] || MealIcon,
-              sortId:   typeId,
+              key:     catKey,
+              labelEn: item.mealTypeEnglishNames,
+              labelHi: item.mealTypeHindiNames,
+              labelMr: item.mealTypeMarathiNames,
+              // ✅ store mealTypeIds so sidebar can look up Firebase image later
+              mealTypeId: String(item.mealTypeIds),
+              sortId:  typeId,
             };
             catOrder.push(catKey);
           }
@@ -273,7 +287,7 @@ const BookOrderCard = ({
         });
 
         const sortedKeys = catOrder.sort(
-          (a, b) => (catMeta[a].sortId ?? 999) - (catMeta[b].sortId ?? 999)
+          (a, b) => (catMeta[a].sortId ?? 999) - (catMeta[b].sortId ?? 999),
         );
 
         if (active.length > 0 && active[0].createdOn) {
@@ -282,7 +296,6 @@ const BookOrderCard = ({
 
         setCategories(sortedKeys.map((k) => catMeta[k]));
         setMenuItems(grouped);
-
         if (sortedKeys.length > 0) setActiveCategory(sortedKeys[0]);
       })
       .catch((err) => {
@@ -290,6 +303,13 @@ const BookOrderCard = ({
       })
       .finally(() => setMenuLoading(false));
   }, [branchId]);
+
+  // ✅ NEW: resolve sidebar icon — Firebase image from getAllMeal, fallback to local PNG
+  const getCatIcon = (cat) => {
+    const firebaseImg = mealImageMap[cat.mealTypeId];
+    if (firebaseImg) return firebaseImg;
+    return FALLBACK_ICON[cat.key] || MealIcon;
+  };
 
   const items = activeCategory ? (menuItems[activeCategory] ?? []) : [];
 
@@ -341,7 +361,6 @@ const BookOrderCard = ({
           )}
         </div>
 
-        {/* ── Shift dropdown — only visible AFTER shift is selected ───────── */}
         {shift && (
           <div>
             <button
@@ -350,7 +369,7 @@ const BookOrderCard = ({
                 const rect = shiftBtnRef.current?.getBoundingClientRect();
                 if (rect) {
                   setDropdownPos({
-                    top: rect.bottom + 8,
+                    top:   rect.bottom + 8,
                     right: window.innerWidth - rect.right,
                   });
                 }
@@ -372,13 +391,12 @@ const BookOrderCard = ({
                 transition: "all 0.2s",
               }}
             >
-              {shift}
+              {shift?.shiftName}
               <span style={{ fontSize: "0.75em" }}>▾</span>
             </button>
 
             {shiftOpen && (
               <>
-                {/* backdrop to close on outside click */}
                 <div
                   onClick={() => setShiftOpen(false)}
                   style={{ position: "fixed", inset: 0, zIndex: 998 }}
@@ -386,7 +404,7 @@ const BookOrderCard = ({
                 <div
                   style={{
                     position: "fixed",
-                    top: dropdownPos.top,
+                    top:   dropdownPos.top,
                     right: dropdownPos.right,
                     background: "#FFFFFF",
                     border: "1.5px solid #E5E7EB",
@@ -400,14 +418,14 @@ const BookOrderCard = ({
                   {shifts.map((s) => (
                     <button
                       key={s.shiftId}
-                      onClick={() => { onShiftChange(s.shiftName); setShiftOpen(false); }}
+                      onClick={() => { onShiftChange(s); setShiftOpen(false); }}
                       style={{
                         display: "block",
                         width: "100%",
                         padding: "16px 28px",
-                        background: s.shiftName === shift ? "#FEF2F2" : "transparent",
-                        color: s.shiftName === shift ? "#B91C1C" : "#374151",
-                        fontWeight: s.shiftName === shift ? 600 : 500,
+                        background: s.shiftName === shift?.shiftName ? "#FEF2F2" : "transparent",
+                        color:      s.shiftName === shift?.shiftName ? "#B91C1C" : "#374151",
+                        fontWeight: s.shiftName === shift?.shiftName ? 600 : 500,
                         fontSize: "clamp(1.3rem, 2vw, 1.8rem)",
                         border: "none",
                         cursor: "pointer",
@@ -426,8 +444,6 @@ const BookOrderCard = ({
       </div>
 
       {/* ══ BODY ════════════════════════════════════════════════════════════ */}
-
-      {/* ── NO SHIFT SELECTED → show placeholder ───────────────────────── */}
       {!shift ? (
         <div style={{ borderRadius: "0 0 10px 10px", overflow: "hidden" }}>
           <SelectShiftPlaceholder
@@ -437,7 +453,6 @@ const BookOrderCard = ({
           />
         </div>
       ) : (
-        /* ── SHIFT SELECTED → show sidebar + menu ──────────────────────── */
         <div style={{ display: "flex", alignItems: "flex-start", borderRadius: "0 0 10px 10px", overflow: "hidden" }}>
 
           {/* ── LEFT SIDEBAR ─────────────────────────────────────────────── */}
@@ -485,10 +500,15 @@ const BookOrderCard = ({
                       transition: "background 0.15s",
                     }}
                   >
+                    {/* ✅ NEW: Firebase image from getAllMeal, fallback to local PNG */}
                     <img
-                      src={cat.src}
+                      src={getCatIcon(cat)}
                       alt={getCatLabel(cat)}
                       style={{ width: IMG_SIZE, height: IMG_SIZE, objectFit: "contain" }}
+                      onError={(e) => {
+                        // if Firebase URL fails, fall back to local PNG
+                        e.target.src = FALLBACK_ICON[cat.key] || MealIcon;
+                      }}
                     />
                     <p
                       style={{

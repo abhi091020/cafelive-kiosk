@@ -1,4 +1,4 @@
-// src\services\api\orderAPI.js
+// src/services/api/orderAPI.js
 
 import axiosInstance from "./axiosInstance";
 import { generateMockOrderResponse } from "@mock/mockOrders";
@@ -7,26 +7,29 @@ import { generateMockOrderResponse } from "@mock/mockOrders";
 
 /**
  * bookOrder — submit the employee's meal selection.
- * Returns a confirmed order containing the token number for ticket printing.
  *
- * @param  {Object}   payload
- * @param  {string}   payload.employeeId  - Employee ID
- * @param  {string}   payload.shift       - Current shift
- * @param  {Array}    payload.items       - [{ id, quantity }]
- * @param  {string}   [payload.date]      - YYYY-MM-DD (defaults to today)
- * @returns {Promise<Object>}             - Confirmed order with tokenNumber
- * @throws  {Error}                       - Enriched error with errorKey
+ * Backend contract: POST /booking/bookOrder
+ * Body: { empId: string, shiftId: number, items: [{ menuId: number, qty: number }] }
+ *
+ * @param  {Object} payload
+ * @param  {string} payload.employeeId  - Employee ID
+ * @param  {number} payload.shiftId     - Shift ID (from shift object)
+ * @param  {Array}  payload.items       - [{ id, quantity }]
+ * @returns {Promise<Object>}           - Confirmed booking result
+ * @throws  {Error}                     - Enriched error with errorKey / serverMessage
  */
 export const bookOrder = async (payload) => {
-  if (!payload?.employeeId || !payload?.items?.length) {
-    throw new Error("employeeId and items are required for bookOrder");
+  if (!payload?.employeeId || !payload?.shiftId || !payload?.items?.length) {
+    throw new Error("employeeId, shiftId and items are required for bookOrder");
   }
 
   const body = {
-    employeeId: payload.employeeId,
-    shift: payload.shift,
-    date: payload.date ?? new Date().toISOString().split("T")[0],
-    items: payload.items.map(({ id, quantity }) => ({ id, quantity })),
+    empId:   String(payload.employeeId),
+    shiftId: Number(payload.shiftId),
+    items:   payload.items.map(({ id, quantity }) => ({
+      menuId: Number(id),
+      qty:    quantity,
+    })),
   };
 
   if (import.meta.env.VITE_DEV_MODE === "true") {
@@ -34,7 +37,7 @@ export const bookOrder = async (payload) => {
     return { ...generateMockOrderResponse(), items: body.items };
   }
 
-  const response = await axiosInstance.post("/order/book", body);
+  const response = await axiosInstance.post("/booking/bookOrder", body);
   return response.data;
 };
 
@@ -42,11 +45,10 @@ export const bookOrder = async (payload) => {
 
 /**
  * getOrder — retrieve a confirmed order by ID.
- * Used on OrderSuccessScreen to display booking summary.
  *
  * @param  {string} orderId
  * @returns {Promise<Object>} - Full order object
- * @throws  {Error} - Enriched error with errorKey
+ * @throws  {Error}           - Enriched error with errorKey
  */
 export const getOrder = async (orderId) => {
   if (!orderId) {
