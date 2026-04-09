@@ -29,3 +29,18 @@ export const scanCard = async (cardId) => {
   );
   return response.data;
 };
+// ADD this new function below scanCard
+
+export const validateUser = async (empId) => {
+  if (!empId) throw new Error("empId is required");
+
+  if (import.meta.env.VITE_DEV_MODE === "true") {
+    await new Promise((r) => setTimeout(r, 600));
+    return mockUser;
+  }
+
+  const response = await axiosInstance.post(
+    `/employee/validateUser/${encodeURIComponent(empId)}`,
+  );
+  return response.data.result; // ← unwrap result from { statusCode, message, result }
+};

@@ -2,45 +2,50 @@
 
 import { useState, useRef, useEffect } from "react";
 import { useTranslation } from "react-i18next";
-import { useUser } from "@context/UserContext";
-import { getShifts, getMenu, getMealTypes } from "@services/api/menuAPI";
+import { getShifts, getDayWiseFoodAllocation } from "@services/api/menuAPI";
 
-import MealIcon   from "@assets/meal/meal.png";
+import MealIcon from "@assets/meal/meal.png";
 import SnacksIcon from "@assets/meal/snacks.png";
-import TeaIcon    from "@assets/meal/teacoffee.png";
+import TeaIcon from "@assets/meal/teacoffee.png";
 
-const ROW_HEIGHT     = "clamp(140px, 19vh, 210px)";
+const ROW_HEIGHT = "clamp(140px, 19vh, 210px)";
 const SIDEBAR_HEIGHT = "clamp(140px, 19vh, 210px)";
-const IMG_SIZE       = "clamp(85px, 11.5vh, 135px)";
+const IMG_SIZE = "clamp(85px, 11.5vh, 135px)";
 
-// ─── Day helper ───────────────────────────────────────────────────────────────
-const DAY_NAMES = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
-const getTodayName = () => DAY_NAMES[new Date().getDay()];
-
-// ─── Fallback icons per category key ─────────────────────────────────────────
-const FALLBACK_ICON = {
-  meal:       MealIcon,
-  snacks:     SnacksIcon,
-  tea_coffee: TeaIcon,
+// ─── Static meal type config (keyed by mealTypeId from API) ──────────────────
+// mealTypeId 1 = Lunch/Meal, 2 = Snacks, 3 = Tea/Coffee
+// Extend this map if the backend adds more meal types.
+const MEAL_TYPE_CONFIG = {
+  1: {
+    key: "meal",
+    labelEn: "Lunch",
+    labelHi: "दोपहर का खाना",
+    labelMr: "दुपारचे जेवण",
+    icon: MealIcon,
+  },
+  2: {
+    key: "snacks",
+    labelEn: "Snacks",
+    labelHi: "नाश्ता",
+    labelMr: "नाश्ता",
+    icon: SnacksIcon,
+  },
+  3: {
+    key: "tea_coffee",
+    labelEn: "Tea/Coffee",
+    labelHi: "चाय/कॉफी",
+    labelMr: "चहा/कॉफी",
+    icon: TeaIcon,
+  },
 };
 
-// ─── Map API mealTypeEnglishNames → sidebar category key ─────────────────────
-const MEAL_TYPE_MAP = {
-  lunch:        "meal",
-  meal:         "meal",
-  dinner:       "meal",
-  breakfast:    "meal",
-  snacks:       "snacks",
-  snack:        "snacks",
-  tea:          "tea_coffee",
-  coffee:       "tea_coffee",
-  "tea/coffee": "tea_coffee",
-};
-
-const getCategoryKey = (mealTypeEnglishNames = "") => {
-  const lower = mealTypeEnglishNames.toLowerCase().trim();
-  return MEAL_TYPE_MAP[lower] || "meal";
-};
+const DEFAULT_CONFIG = (mealTypeId) => ({
+  key: `meal_type_${mealTypeId}`,
+  labelEn: `Meal Type ${mealTypeId}`,
+  labelHi: `भोजन प्रकार ${mealTypeId}`,
+  labelMr: `जेवणाचा प्रकार ${mealTypeId}`,
+  icon: MealIcon,
+});
 
 // ─── BookOrderCard ────────────────────────────────────────────────────────────
 const BookOrderCard = ({
@@ -52,22 +57,16 @@ const BookOrderCard = ({
   const { i18n } = useTranslation();
   const lang = i18n.language;
 
-  const { user } = useUser();
-  const branchId = user?.branchId ?? null;
-
-  const [shiftOpen,      setShiftOpen]      = useState(false);
-  const [dropdownPos,    setDropdownPos]    = useState({ top: 0, right: 0 });
+  const [shiftOpen, setShiftOpen] = useState(false);
+  const [dropdownPos, setDropdownPos] = useState({ top: 0, right: 0 });
   const [activeCategory, setActiveCategory] = useState(null);
-  const [shifts,         setShifts]         = useState([]);
-  const [shiftsLoading,  setShiftsLoading]  = useState(true);
-  const [categories,     setCategories]     = useState([]);
+  const [shifts, setShifts] = useState([]);
+  const [shiftsLoading, setShiftsLoading] = useState(true);
+  const [categories, setCategories] = useState([]);
+  const [menuItems, setMenuItems] = useState({});
+  const [menuLoading, setMenuLoading] = useState(false);
+
   const shiftBtnRef = useRef(null);
-  const [menuItems,      setMenuItems]      = useState({});
-  const [menuLoading,    setMenuLoading]    = useState(true);
-  const [menuDate,       setMenuDate]       = useState(null);
-
-  const [mealImageMap,   setMealImageMap]   = useState({});
-
   const rightPanelRef = useRef(null);
 
   const getItemName = (item) => {
@@ -77,23 +76,20 @@ const BookOrderCard = ({
   };
 
   const getCatLabel = (cat) => {
-    if (lang === "hi" && cat.labelHi) return cat.labelHi;
-    if (lang === "mr" && cat.labelMr) return cat.labelMr;
+    if (lang === "hi") return cat.labelHi;
+    if (lang === "mr") return cat.labelMr;
     return cat.labelEn;
   };
 
-  // ── Fetch shifts + auto-select Morning Shift ────────────────────────────────
+  // ── Fetch shifts + auto-select first ───────────────────────────────────────
   useEffect(() => {
     getShifts()
       .then((data) => {
         setShifts(data);
-
-        // ✅ Auto-select Morning Shift (or first shift as fallback)
-        const morning = data.find((s) =>
-          s.shiftName?.toLowerCase().includes("morning")
-        ) ?? data[0];
-
-        if (morning) onShiftChange(morning);
+        const first =
+          data.find((s) => s.shiftName?.toLowerCase().includes("morning")) ??
+          data[0];
+        if (first) onShiftChange(first);
       })
       .catch(() => {
         const fallback = [
@@ -103,97 +99,69 @@ const BookOrderCard = ({
           { shiftId: 4, shiftName: "General Shift" },
         ];
         setShifts(fallback);
-        onShiftChange(fallback[0]); // ✅ fallback to first shift
+        onShiftChange(fallback[0]);
       })
       .finally(() => setShiftsLoading(false));
   }, []);
 
-  // ── Fetch meal types ────────────────────────────────────────────────────────
+  // ── Fetch allocation whenever shift changes ────────────────────────────────
   useEffect(() => {
-    getMealTypes()
-      .then((mealTypes) => {
-        const map = {};
+    if (!shift?.shiftId) return;
+
+    setMenuLoading(true);
+    setCategories([]);
+    setMenuItems({});
+    setActiveCategory(null);
+
+    getDayWiseFoodAllocation(shift.shiftId)
+      .then((data) => {
+        console.log("RAW ALLOCATION:", JSON.stringify(data, null, 2)); // ← HERE
+        const { mealTypes = [] } = data;
+        const cats = [];
+        const grouped = {};
+
         mealTypes.forEach((mt) => {
-          if (mt.mealTypeId && mt.mealImage) {
-            map[String(mt.mealTypeId)] = mt.mealImage;
-          }
-        });
-        setMealImageMap(map);
-      })
-      .catch(() => {
-        console.warn("[BookOrderCard] getMealTypes failed, using fallback icons");
-      });
-  }, []);
+          const config =
+            MEAL_TYPE_CONFIG[mt.mealTypeId] ?? DEFAULT_CONFIG(mt.mealTypeId);
+          const catKey = config.key;
 
-  // ── Fetch menu ──────────────────────────────────────────────────────────────
-  useEffect(() => {
-    const today = getTodayName();
-
-    getMenu(branchId)
-      .then((rawItems) => {
-        const active = rawItems.filter((item) => {
-          if (!item.status) return false;
-          const days = item.weekDay?.split(",").map((d) => d.trim()) ?? [];
-          if (!days.includes(today)) return false;
-          return true;
-        });
-
-        const grouped  = {};
-        const catMeta  = {};
-        const catOrder = [];
-
-        active.forEach((item) => {
-          const catKey = getCategoryKey(item.mealTypeEnglishNames);
-          const typeId = parseInt(item.mealTypeIds, 10) || 999;
-
-          if (!grouped[catKey]) grouped[catKey] = [];
-
-          if (!catMeta[catKey]) {
-            catMeta[catKey] = {
-              key:       catKey,
-              labelEn:   item.mealTypeEnglishNames,
-              labelHi:   item.mealTypeHindiNames,
-              labelMr:   item.mealTypeMarathiNames,
-              mealTypeId: String(item.mealTypeIds),
-              sortId:    typeId,
-            };
-            catOrder.push(catKey);
-          }
-
-          grouped[catKey].push({
-            id:     String(item.menuId),
-            nameEn: item.menuEnglishName,
-            nameHi: item.menuHindiName,
-            nameMr: item.menuMarathiName,
-            img:    item.imagePath,
-            desc:   item.typeOfMeal,
-            raw:    item,
+          cats.push({
+            key: catKey,
+            labelEn: config.labelEn,
+            labelHi: config.labelHi,
+            labelMr: config.labelMr,
+            icon: config.icon,
           });
+
+          // Flatten all items across all menus inside this mealType
+          const items = [];
+          (mt.menus ?? []).forEach((menu) => {
+            (menu.items ?? []).forEach((item) => {
+              items.push({
+                id: String(item.itemId),
+                nameEn: item.itemEnglishName,
+                nameHi: item.itemHindiName,
+                nameMr: item.itemMarathiName,
+                menuId: menu.menuId,
+              });
+            });
+          });
+
+          grouped[catKey] = items;
         });
 
-        const sortedKeys = catOrder.sort(
-          (a, b) => (catMeta[a].sortId ?? 999) - (catMeta[b].sortId ?? 999),
-        );
-
-        if (active.length > 0 && active[0].createdOn) {
-          setMenuDate(active[0].createdOn);
-        }
-
-        setCategories(sortedKeys.map((k) => catMeta[k]));
+        setCategories(cats);
         setMenuItems(grouped);
-        if (sortedKeys.length > 0) setActiveCategory(sortedKeys[0]);
+        if (cats.length > 0) setActiveCategory(cats[0].key);
       })
       .catch((err) => {
-        console.error("❌ Menu failed:", err.message);
+        console.error(
+          "[BookOrderCard] getDayWiseFoodAllocation failed:",
+          err.message,
+        );
       })
       .finally(() => setMenuLoading(false));
-  }, [branchId]);
-
-  const getCatIcon = (cat) => {
-    const firebaseImg = mealImageMap[cat.mealTypeId];
-    if (firebaseImg) return firebaseImg;
-    return FALLBACK_ICON[cat.key] || MealIcon;
-  };
+  }, [shift?.shiftId]);
 
   const items = activeCategory ? (menuItems[activeCategory] ?? []) : [];
 
@@ -234,30 +202,28 @@ const BookOrderCard = ({
           minHeight: "52px",
         }}
       >
-        <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-          <span style={{ color: "#B91C1C", fontWeight: 700, fontSize: "clamp(1rem, 1.8vw, 1.4rem)" }}>
-            Book Your Order
-          </span>
-          {menuDate && (
-            <span style={{ color: "#9CA3AF", fontSize: "clamp(0.75rem, 1vw, 0.9rem)", fontWeight: 400 }}>
-              {menuDate}
-            </span>
-          )}
-        </div>
+        <span
+          style={{
+            color: "#B91C1C",
+            fontWeight: 700,
+            fontSize: "clamp(1rem, 1.8vw, 1.4rem)",
+          }}
+        >
+          Book Your Order
+        </span>
 
-        {/* ── Shift pill — always visible since shift is auto-selected ── */}
+        {/* ── Shift pill ── */}
         {shift && (
           <div>
             <button
               ref={shiftBtnRef}
               onClick={() => {
                 const rect = shiftBtnRef.current?.getBoundingClientRect();
-                if (rect) {
+                if (rect)
                   setDropdownPos({
-                    top:   rect.bottom + 8,
+                    top: rect.bottom + 8,
                     right: window.innerWidth - rect.right,
                   });
-                }
                 setShiftOpen((p) => !p);
               }}
               style={{
@@ -276,7 +242,7 @@ const BookOrderCard = ({
                 transition: "all 0.2s",
               }}
             >
-              {shift?.shiftName}
+              {shift.shiftName}
               <span style={{ fontSize: "0.75em" }}>▾</span>
             </button>
 
@@ -289,7 +255,7 @@ const BookOrderCard = ({
                 <div
                   style={{
                     position: "fixed",
-                    top:   dropdownPos.top,
+                    top: dropdownPos.top,
                     right: dropdownPos.right,
                     background: "#FFFFFF",
                     border: "1.5px solid #E5E7EB",
@@ -303,14 +269,21 @@ const BookOrderCard = ({
                   {shifts.map((s) => (
                     <button
                       key={s.shiftId}
-                      onClick={() => { onShiftChange(s); setShiftOpen(false); }}
+                      onClick={() => {
+                        onShiftChange(s);
+                        setShiftOpen(false);
+                      }}
                       style={{
                         display: "block",
                         width: "100%",
                         padding: "16px 28px",
-                        background: s.shiftName === shift?.shiftName ? "#FEF2F2" : "transparent",
-                        color:      s.shiftName === shift?.shiftName ? "#B91C1C" : "#374151",
-                        fontWeight: s.shiftName === shift?.shiftName ? 600 : 500,
+                        background:
+                          s.shiftId === shift.shiftId
+                            ? "#FEF2F2"
+                            : "transparent",
+                        color:
+                          s.shiftId === shift.shiftId ? "#B91C1C" : "#374151",
+                        fontWeight: s.shiftId === shift.shiftId ? 600 : 500,
                         fontSize: "clamp(1.3rem, 2vw, 1.8rem)",
                         border: "none",
                         cursor: "pointer",
@@ -329,8 +302,14 @@ const BookOrderCard = ({
       </div>
 
       {/* ══ BODY ════════════════════════════════════════════════════════════ */}
-      <div style={{ display: "flex", alignItems: "flex-start", borderRadius: "0 0 10px 10px", overflow: "hidden" }}>
-
+      <div
+        style={{
+          display: "flex",
+          alignItems: "flex-start",
+          borderRadius: "0 0 10px 10px",
+          overflow: "hidden",
+        }}
+      >
         {/* ── LEFT SIDEBAR ─────────────────────────────────────────────── */}
         <div
           style={{
@@ -354,7 +333,14 @@ const BookOrderCard = ({
                     opacity: 0.4,
                   }}
                 >
-                  <div style={{ width: 60, height: 60, borderRadius: "50%", background: "#E5E7EB" }} />
+                  <div
+                    style={{
+                      width: 60,
+                      height: 60,
+                      borderRadius: "50%",
+                      background: "#E5E7EB",
+                    }}
+                  />
                 </div>
               ))
             : categories.map((cat, idx, arr) => (
@@ -369,18 +355,26 @@ const BookOrderCard = ({
                     alignItems: "center",
                     justifyContent: "center",
                     padding: "16px 0",
-                    borderLeft: activeCategory === cat.key ? "3px solid #B91C1C" : "3px solid transparent",
-                    background: activeCategory === cat.key ? "#FFF0F0" : "transparent",
-                    borderBottom: idx < arr.length - 1 ? "1px solid #F3F4F6" : "none",
+                    borderLeft:
+                      activeCategory === cat.key
+                        ? "3px solid #B91C1C"
+                        : "3px solid transparent",
+                    background:
+                      activeCategory === cat.key ? "#FFF0F0" : "transparent",
+                    borderBottom:
+                      idx < arr.length - 1 ? "1px solid #F3F4F6" : "none",
                     cursor: "pointer",
                     transition: "background 0.15s",
                   }}
                 >
                   <img
-                    src={getCatIcon(cat)}
+                    src={cat.icon}
                     alt={getCatLabel(cat)}
-                    style={{ width: IMG_SIZE, height: IMG_SIZE, objectFit: "contain" }}
-                    onError={(e) => { e.target.src = FALLBACK_ICON[cat.key] || MealIcon; }}
+                    style={{
+                      width: IMG_SIZE,
+                      height: IMG_SIZE,
+                      objectFit: "contain",
+                    }}
                   />
                   <p
                     style={{
@@ -411,82 +405,108 @@ const BookOrderCard = ({
           }}
         >
           {menuLoading && (
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: ROW_HEIGHT }}>
-              <p style={{ color: "#9CA3AF", fontSize: "1.1rem" }}>Loading menu...</p>
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                height: ROW_HEIGHT,
+              }}
+            >
+              <p style={{ color: "#9CA3AF", fontSize: "1.1rem" }}>
+                Loading menu...
+              </p>
             </div>
           )}
 
           {!menuLoading && items.length === 0 && (
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: ROW_HEIGHT }}>
-              <p style={{ color: "#9CA3AF", fontSize: "1.1rem" }}>No items available</p>
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                height: ROW_HEIGHT,
+              }}
+            >
+              <p style={{ color: "#9CA3AF", fontSize: "1.1rem" }}>
+                No items available
+              </p>
             </div>
           )}
 
-          {!menuLoading && items.map((item, index) => {
-            const isSelected = selectedItemIds.has(item.id);
-            return (
-              <div key={item.id}>
-                <div
-                  onClick={() => onItemToggle?.(item)}
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    height: ROW_HEIGHT,
-                    paddingLeft: "32px",
-                    paddingRight: "20px",
-                    gap: "18px",
-                    boxSizing: "border-box",
-                    cursor: "pointer",
-                    background: isSelected ? "#FEF2F2" : "transparent",
-                    transition: "background 0.15s",
-                    userSelect: "none",
-                  }}
-                >
-                  <img
-                    src={item.img}
-                    alt={item.nameEn}
-                    style={{ width: IMG_SIZE, height: IMG_SIZE, objectFit: "contain", flexShrink: 0, borderRadius: "8px" }}
-                    onError={(e) => { e.target.style.display = "none"; }}
-                  />
-
-                  <div style={{ flex: 1 }}>
-                    <p
-                      style={{
-                        margin: item.desc ? "0 0 6px 0" : 0,
-                        fontSize: "clamp(1.3rem, 2.2vw, 1.85rem)",
-                        fontWeight: 700,
-                        color: isSelected ? "#B91C1C" : "#A50000",
-                        lineHeight: 1.3,
-                      }}
-                    >
-                      {getItemName(item)}
-                    </p>
-                    {item.desc && (
-                      <p style={{ margin: 0, fontSize: "clamp(1rem, 1.6vw, 1.4rem)", color: "#676666", lineHeight: 1.5 }}>
-                        {item.desc}
+          {!menuLoading &&
+            items.map((item, index) => {
+              const isSelected = selectedItemIds.has(item.id);
+              return (
+                <div key={item.id}>
+                  <div
+                    onClick={() => onItemToggle?.(item)}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      height: ROW_HEIGHT,
+                      paddingLeft: "32px",
+                      paddingRight: "20px",
+                      gap: "18px",
+                      boxSizing: "border-box",
+                      cursor: "pointer",
+                      background: isSelected ? "#FEF2F2" : "transparent",
+                      transition: "background 0.15s",
+                      userSelect: "none",
+                    }}
+                  >
+                    <div style={{ flex: 1 }}>
+                      <p
+                        style={{
+                          margin: 0,
+                          fontSize: "clamp(1.3rem, 2.2vw, 1.85rem)",
+                          fontWeight: 700,
+                          color: isSelected ? "#B91C1C" : "#A50000",
+                          lineHeight: 1.3,
+                        }}
+                      >
+                        {getItemName(item)}
                       </p>
+                    </div>
+
+                    {isSelected && (
+                      <div
+                        style={{
+                          width: "22px",
+                          height: "22px",
+                          borderRadius: "50%",
+                          background: "#B91C1C",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          flexShrink: 0,
+                        }}
+                      >
+                        <span
+                          style={{
+                            color: "#fff",
+                            fontSize: "13px",
+                            fontWeight: 700,
+                          }}
+                        >
+                          ✓
+                        </span>
+                      </div>
                     )}
                   </div>
 
-                  {isSelected && (
+                  {index < items.length - 1 && (
                     <div
                       style={{
-                        width: "22px", height: "22px", borderRadius: "50%",
-                        background: "#B91C1C", display: "flex", alignItems: "center",
-                        justifyContent: "center", flexShrink: 0,
+                        height: "1px",
+                        background: "rgba(0,0,0,0.1)",
+                        margin: "0 20px",
                       }}
-                    >
-                      <span style={{ color: "#fff", fontSize: "13px", fontWeight: 700 }}>✓</span>
-                    </div>
+                    />
                   )}
                 </div>
-
-                {index < items.length - 1 && (
-                  <div style={{ height: "1px", background: "rgba(0,0,0,0.1)", margin: "0 20px" }} />
-                )}
-              </div>
-            );
-          })}
+              );
+            })}
         </div>
       </div>
     </div>

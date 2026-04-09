@@ -1,7 +1,11 @@
+// src/pages/login/index.jsx
+
 import { useNavigate } from "react-router-dom";
-import { useRef } from "react";
+import { useState } from "react";
 import { useUser } from "@context/UserContext";
 import { ROUTES } from "@router/AppRouter";
+import { validateUser } from "@services/api/userAPI";
+import useScanner from "@hooks/useScanner";
 import finalBg from "@assets/finalbg.jpg";
 import CafeLiveLogo from "@assets/cafelive.png";
 import BajajLogo from "@assets/bajajlogo.png";
@@ -15,41 +19,43 @@ import SplashFooter from "@components/login/SplashFooter";
 const LoginPage = () => {
   const navigate = useNavigate();
   const { setUser } = useUser();
+  const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [scanEnabled, setScanEnabled] = useState(false);
 
-  const tapCount = useRef(0);
-  const tapTimer = useRef(null);
+  const handleFaceScan = async (empId) => {
+    if (loading) return;
+    setError(null);
+    setLoading(true);
 
-  const handleScan = () => {
-    tapCount.current += 1;
-    clearTimeout(tapTimer.current);
+    try {
+      const result = await validateUser(empId);
+      // console.log("VALIDATE RESULT:", result); // ← add this
+      setUser(result);
 
-    tapTimer.current = setTimeout(() => {
-      if (tapCount.current >= 2) {
-        // ── DOUBLE TAP → Staff Home ──
-        const mockStaff = {
-          id: "STAFF001",
-          employeeId: "STAFF001",
-          name: "Canteen Staff",
-          department: "Canteen",
-          role: "staff",
-        };
-        setUser(mockStaff);
+      if (result.empCategoryName?.toLowerCase().trim() === "staff") {
         navigate(ROUTES.STAFF_HOME);
       } else {
-        // ── SINGLE TAP → Employee Home ──
-        const mockUser = {
-          id: "2",
-          employeeId: "2",
-          name: "Aakash Shirke",
-          department: "Staff Executive",
-          shift: "Morning",
-          canBookGuest: true,
-        };
-        setUser(mockUser);
         navigate(ROUTES.HOME);
       }
-      tapCount.current = 0;
-    }, 300); // 300ms window to detect double tap
+    } catch (err) {
+      setError(err.serverMessage ?? "Face not recognised. Please try again.");
+      setScanEnabled(false);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // ── Face device input — only active after button click ──
+  useScanner({
+    onScan: (empId) => handleFaceScan(empId),
+    minLength: 1,
+    disabled: !scanEnabled,
+  });
+
+  // ── Button click → only enables scanner, nothing else ──
+  const handleScan = () => {
+    setScanEnabled(true);
   };
 
   return (
@@ -159,6 +165,48 @@ const LoginPage = () => {
       >
         <LanguageSelector />
       </div>
+
+      {/* ── ERROR MESSAGE ── */}
+      {error && (
+        <div
+          style={{
+            position: "absolute",
+            top: "clamp(44vh, 48vh, 52vh)", // ← changed this too
+            left: "50%",
+            transform: "translateX(-50%)",
+            zIndex: 2,
+            background: "#FEF2F2",
+            border: "1px solid #B91C1C",
+            borderRadius: "10px",
+            padding: "10px 24px",
+            color: "#B91C1C",
+            fontWeight: 600,
+            fontSize: "1rem",
+            whiteSpace: "nowrap",
+          }}
+        >
+          {error}
+        </div>
+      )}
+
+      {/* ── LOADING / SCAN READY INDICATOR ── */}
+      {(loading || scanEnabled) && !error && (
+        <div
+          style={{
+            position: "absolute",
+            top: "clamp(44vh, 48vh, 52vh)", // ← changed
+            left: "50%",
+            transform: "translateX(-50%)",
+            zIndex: 2,
+            color: "#079A3F",
+            fontWeight: 600,
+            fontSize: "1.2rem",
+            whiteSpace: "nowrap",
+          }}
+        >
+          {loading ? "Verifying..." : "Ready — please scan your face"}
+        </div>
+      )}
 
       {/* ── READY TO SCAN BUTTON ── */}
       <div

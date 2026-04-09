@@ -24,7 +24,7 @@ const StaffHomePage = () => {
       <Header />
 
       {/* ── BACK BUTTON ── */}
-      <BackButton to="/home" />
+      <BackButton to="/" />
 
       {/* ── USER WELCOME ── */}
       <UserWelcome />

@@ -1,46 +1,80 @@
-// src\mock\mockMenu.js
-
-// ─── Mock Menu ────────────────────────────────────────────────────────────────
-// Returns a structurally valid menu for dev/testing.
-// Item names are intentionally generic — real names always come from the API.
-// This file validates UI shape and flow only, never canteen content.
-//
-// Shape mirrors the real Java backend /menu response.
-// Update structure here if the backend contract changes.
-
-// ─── Helper — generate placeholder items ──────────────────────────────────────
-
-const makItems = (category, count) =>
-  Array.from({ length: count }, (_, i) => ({
-    id: `${category}-${String(i + 1).padStart(3, "0")}`, // e.g. "meal-001"
-    nameEn: `${category.replace("_", " ")} Item ${i + 1}`, // e.g. "meal Item 1"
-    category,
-    isVeg: i % 2 === 0, // alternates veg / non-veg for UI testing
-  }));
-
-// ─── Mock Menu Object ─────────────────────────────────────────────────────────
+// src/mock/mockMenu.js
+// Shape mirrors the new /food-allocation/getDayWiseFoodAllocationByDate/{date}/{shiftId} response.
+// Used only for dev/testing — real data always comes from the API.
 
 const mockMenu = {
-  date: new Date().toISOString().split("T")[0], // Today: YYYY-MM-DD
-  shift: "Morning",
-  categories: [
+  mealTypes: [
     {
-      id: "cat-meal",
-      key: "meal",
-      labelEn: "Meal",
-      items: makItems("meal", 4),
+      mealTypeId: 1,
+      menus: [
+        {
+          menuId: 1,
+          items: [
+            {
+              itemId: 1,
+              itemEnglishName: "Poha",
+              itemHindiName: "पोहा",
+              itemMarathiName: "पोहे",
+            },
+            {
+              itemId: 2,
+              itemEnglishName: "Upma",
+              itemHindiName: "उपमा",
+              itemMarathiName: "उपमा",
+            },
+            {
+              itemId: 3,
+              itemEnglishName: "Dal Rice",
+              itemHindiName: "दाल चावल",
+              itemMarathiName: "डाळ भात",
+            },
+          ],
+        },
+      ],
     },
     {
-      id: "cat-snacks",
-      key: "snacks",
-      labelEn: "Snacks",
-      items: makItems("snacks", 3),
+      mealTypeId: 2,
+      menus: [
+        {
+          menuId: 2,
+          items: [
+            {
+              itemId: 4,
+              itemEnglishName: "Samosa",
+              itemHindiName: "समोसा",
+              itemMarathiName: "समोसा",
+            },
+            {
+              itemId: 5,
+              itemEnglishName: "Vada Pav",
+              itemHindiName: "वड़ा पाव",
+              itemMarathiName: "वडापाव",
+            },
+          ],
+        },
+      ],
     },
     {
-      id: "cat-tea-coffee",
-      key: "tea_coffee",
-      labelEn: "Tea / Coffee",
-      items: makItems("tea_coffee", 2),
+      mealTypeId: 3,
+      menus: [
+        {
+          menuId: 3,
+          items: [
+            {
+              itemId: 6,
+              itemEnglishName: "Masala Chai",
+              itemHindiName: "मसाला चाय",
+              itemMarathiName: "मसाला चहा",
+            },
+            {
+              itemId: 7,
+              itemEnglishName: "Filter Coffee",
+              itemHindiName: "फिल्टर कॉफी",
+              itemMarathiName: "फिल्टर कॉफी",
+            },
+          ],
+        },
+      ],
     },
   ],
 };

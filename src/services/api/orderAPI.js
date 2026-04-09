@@ -24,11 +24,12 @@ export const bookOrder = async (payload) => {
   }
 
   const body = {
-    empId:   String(payload.employeeId),
+    empId: String(payload.employeeId),
     shiftId: Number(payload.shiftId),
-    items:   payload.items.map(({ id, quantity }) => ({
-      menuId: Number(id),
-      qty:    quantity,
+    items: payload.items.map(({ id, menuId, quantity }) => ({
+      itemId: Number(id),
+      menuId: Number(menuId),
+      qty: quantity,
     })),
   };
 

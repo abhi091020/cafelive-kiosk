@@ -67,7 +67,9 @@ const MyOrderSection = ({
         </div>
 
         {bulkMode && (
-          <span style={{ fontSize: "1.15rem", fontWeight: 700, color: "#EA4D4E" }}>
+          <span
+            style={{ fontSize: "1.15rem", fontWeight: 700, color: "#EA4D4E" }}
+          >
             Enter QTY.
           </span>
         )}
@@ -124,8 +126,12 @@ const MyOrderSection = ({
                     outline: "none",
                     background: "#FFFFFF",
                   }}
-                  onFocus={(e) => (e.currentTarget.style.borderColor = "#EA4D4E")}
-                  onBlur={(e)  => (e.currentTarget.style.borderColor = "#E5E7EB")}
+                  onFocus={(e) =>
+                    (e.currentTarget.style.borderColor = "#EA4D4E")
+                  }
+                  onBlur={(e) =>
+                    (e.currentTarget.style.borderColor = "#E5E7EB")
+                  }
                 />
               ) : (
                 /* ── Normal: +/- stepper ── */

@@ -63,7 +63,7 @@ const EmployeeBookingPage = () => {
       </div>
 
       {/* ── BACK BUTTON ── */}
-      <BackButton to="/home" />
+      <BackButton to="/staff-home" />
 
       {/* ── ID CARD ── */}
       <div

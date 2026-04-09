@@ -40,14 +40,15 @@ export const UserProvider = ({ children }) => {
     }
 
     const normalised = {
-      id:           userData.id          ?? "",
-      employeeId:   userData.employeeId  ?? userData.id ?? "",
-      name:         userData.name        ?? "Employee",
-      department:   userData.department  ?? "—",
-      shift:        userData.shift       ?? "General",
+      id: String(userData.empId ?? userData.id ?? ""),
+      employeeId: String(userData.empId ?? userData.id ?? ""),
+      name: userData.empName ?? userData.name ?? "Employee",
+      department: userData.deptName ?? userData.department ?? "—",
+      shift: userData.shift ?? "General",
       canBookGuest: userData.canBookGuest ?? false,
-      branchId:     userData.branchId    ?? null,   // ← added
-      branchName:   userData.branchName  ?? "",     // ← added
+      branchId: userData.branchId ?? null,
+      branchName: userData.branchName ?? "",
+      empCategoryName: userData.empCategoryName ?? "",
     };
 
     setUserState(normalised);

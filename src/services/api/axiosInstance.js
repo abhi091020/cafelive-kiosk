@@ -55,7 +55,7 @@ axiosInstance.interceptors.response.use(
   },
   (error) => {
     const status = error.response?.status;
-    const url    = error.config?.url ?? "unknown";
+    const url = error.config?.url ?? "unknown";
 
     let errorKey = "unknownError";
 
@@ -63,19 +63,29 @@ axiosInstance.interceptors.response.use(
       errorKey = error.code === "ECONNABORTED" ? "apiTimeout" : "networkError";
     } else {
       switch (status) {
-        case 401: errorKey = "sessionExpired"; break;
-        case 409: errorKey = "alreadyBooked";  break;
-        case 500: errorKey = "serverError";    break;
-        case 503: errorKey = "networkError";   break;
-        default:  errorKey = "unknownError";   break;
+        case 401:
+          errorKey = "sessionExpired";
+          break;
+        case 409:
+          errorKey = "alreadyBooked";
+          break;
+        case 500:
+          errorKey = "serverError";
+          break;
+        case 503:
+          errorKey = "networkError";
+          break;
+        default:
+          errorKey = "unknownError";
+          break;
       }
     }
 
     const enriched = new Error(errorKey);
-    enriched.errorKey      = errorKey;
-    enriched.status        = status ?? null;
-    enriched.url           = url;
-    enriched.original      = error;
+    enriched.errorKey = errorKey;
+    enriched.status = status ?? null;
+    enriched.url = url;
+    enriched.original = error;
     // ✅ ADDED: attach backend message so UI can show it directly
     enriched.serverMessage = error.response?.data?.message ?? null;
 
