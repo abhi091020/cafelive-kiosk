@@ -8,6 +8,7 @@ import {
   BackButton,
 } from "@common";
 import { HomeIllustration, ActionButtons } from "@components/home";
+import { ROUTES } from "@router/AppRouter";
 
 const HomePage = () => {
   return (
@@ -23,8 +24,11 @@ const HomePage = () => {
       {/* ── HEADER ── */}
       <Header />
 
-      {/* ── BACK BUTTON ── */}
-      <BackButton to="/" />
+      {/* ── BACK BUTTON ────────────────────────────────────────────────────
+           No onBack needed — LoginPage clears session on mount automatically.
+           replace:true is handled inside BackButton itself.
+      ── */}
+      <BackButton to={ROUTES.LOGIN} />
 
       {/* ── USER WELCOME ── */}
       <UserWelcome />

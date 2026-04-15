@@ -2,13 +2,19 @@
 
 import { useNavigate } from "react-router-dom";
 import backIcon from "@assets/back.svg";
+import PropTypes from "prop-types";
 
-const BackButton = ({ to = -1 }) => {
+const BackButton = ({ to = -1, onBack = null }) => {
   const navigate = useNavigate();
+
+  const handleClick = () => {
+    if (typeof onBack === "function") onBack(); // run cleanup first
+    navigate(to, { replace: true }); // always replace, never push
+  };
 
   return (
     <div
-      onClick={() => navigate(to)}
+      onClick={handleClick}
       style={{
         position: "absolute",
         top: "clamp(9vh, 11.00vh, 13vh)",
@@ -43,6 +49,11 @@ const BackButton = ({ to = -1 }) => {
       />
     </div>
   );
+};
+
+BackButton.propTypes = {
+  to: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+  onBack: PropTypes.func,
 };
 
 export default BackButton;

@@ -1,8 +1,9 @@
 // src/pages/login/index.jsx
 
 import { useNavigate } from "react-router-dom";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useUser } from "@context/UserContext";
+import { useOrder } from "@context/OrderContext";
 import { ROUTES } from "@router/AppRouter";
 import { validateUser } from "@services/api/userAPI";
 import useScanner from "@hooks/useScanner";
@@ -18,10 +19,22 @@ import SplashFooter from "@components/login/SplashFooter";
 
 const LoginPage = () => {
   const navigate = useNavigate();
-  const { setUser } = useUser();
+  const { setUser, clearUser } = useUser();
+  const { clearOrder } = useOrder();
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
   const [scanEnabled, setScanEnabled] = useState(false);
+
+  // ── Always wipe session when Login mounts ─────────────────────────────────
+  // This guarantees a clean state whether the user:
+  //   • arrived via idle timeout
+  //   • pressed BackButton from Home / StaffHome
+  //   • navigated here any other way
+  // This is the correct kiosk pattern — no race condition possible.
+  useEffect(() => {
+    clearUser();
+    clearOrder();
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleFaceScan = async (empId) => {
     if (loading) return;
@@ -34,16 +47,16 @@ const LoginPage = () => {
       setUser(result);
 
       // ── Routing logic ─────────────────────────────────────────
-      // Staff   → canteenStaffId present       → /staff-home
-      // Contractor → employmentType OnContract  → /staff-home
-      // Employee   → employmentType OnRoll      → /home
+      // Staff      → canteenStaffId present      → /staff-home
+      // Contractor → employmentType OnContract   → /staff-home
+      // Employee   → employmentType OnRoll       → /home
       const isStaff = !!result.canteenStaffId;
       const isContractor = result.employmentType === "OnContract";
 
       if (isStaff || isContractor) {
-        navigate(ROUTES.STAFF_HOME);
+        navigate(ROUTES.STAFF_HOME, { replace: true });
       } else {
-        navigate(ROUTES.HOME);
+        navigate(ROUTES.HOME, { replace: true });
       }
     } catch (err) {
       setError(err.serverMessage ?? "Face not recognised. Please try again.");

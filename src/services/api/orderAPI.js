@@ -60,7 +60,7 @@ export const bookBulkOrder = async (payload) => {
     shiftId: Number(payload.shiftId),
     deviceId: Number(payload.deviceId ?? 1),
     items: payload.items.map(({ menuId, quantity }) => ({
-      menuId: Number(menuId),
+      menuId: Number(menuId), // ✅ caller (bulk-booking page) now sends menuId: i.id
       quantity: Number(quantity),
     })),
   };

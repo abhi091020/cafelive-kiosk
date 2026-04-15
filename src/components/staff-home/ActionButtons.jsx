@@ -49,7 +49,7 @@ const ActionButtons = () => {
     <div
       style={{
         position: "absolute",
-        top: "clamp(69vh, 71vh, 73vh)",
+        top: "clamp(69vh, 71vh, 73vh)", // ← same for both roles
         left: "50%",
         transform: "translateX(-50%)",
         zIndex: 10,
@@ -60,16 +60,26 @@ const ActionButtons = () => {
       }}
     >
       {isContractor ? (
-        /* ── Contractor: Bulk Order only ── */
-        <button
-          onClick={() => navigate(ROUTES.BULK_BOOKING)}
-          style={baseButtonStyle}
-          {...pointerHandlers}
-        >
-          {t("staffHome.bulkBooking")}
-        </button>
+        <>
+          {/* Spacer pushes Bulk Order into the same slot as Guest Booking */}
+          <div
+            style={{
+              width: "100%",
+              padding: "clamp(0.8vh, 1.0vh, 1.2vh) 0",
+              fontSize: "clamp(2rem, 3.5vw, 2.8rem)",
+              fontWeight: 600,
+              visibility: "hidden",
+            }}
+          />
+          <button
+            onClick={() => navigate(ROUTES.BULK_BOOKING)}
+            style={baseButtonStyle}
+            {...pointerHandlers}
+          >
+            {t("staffHome.bulkBooking")}
+          </button>
+        </>
       ) : (
-        /* ── Staff: Employee Booking + Guest Booking ── */
         <>
           <button
             onClick={() => navigate(ROUTES.EMPLOYEE_BOOKING)}

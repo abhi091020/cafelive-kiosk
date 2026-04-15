@@ -15,7 +15,7 @@ import { BulkOrderItem, BulkOrderActions } from "@components/bulk-booking";
 import { useUser } from "@context/UserContext";
 import { useTranslation } from "react-i18next";
 import usePrint from "@hooks/usePrint";
-import { createAndPrintTicket } from "@services/print/printService";
+import { createAndPrintBulkTicket } from "@services/print/printService"; // ✅ FIXED: was createAndPrintTicket
 import { bookBulkOrder } from "@services/api/orderAPI";
 
 // ─── Animations ───────────────────────────────────────────────────────────────
@@ -234,7 +234,7 @@ const BookingErrorDialog = ({ message, onClose }) => {
 const BulkBookingPage = () => {
   const navigate = useNavigate();
   const scrollRef = useRef(null);
-  const bookingLockRef = useRef(false); // ← prevent duplicate submissions
+  const bookingLockRef = useRef(false);
   const { user } = useUser();
   const { print } = usePrint();
   const { t } = useTranslation();
@@ -303,7 +303,6 @@ const BulkBookingPage = () => {
   const handleDialogYes = () => setShowDialog(false);
 
   const handleDialogNo = async () => {
-    // ── prevent duplicate submissions ──────────────────────────────────────
     if (bookingLockRef.current) return;
     bookingLockRef.current = true;
 
@@ -319,26 +318,26 @@ const BulkBookingPage = () => {
         shiftId: shift.shiftId,
         deviceId: 1,
         items: selectedItems.map((i) => ({
-          menuId: i.menuId,
+          menuId: i.id,
           quantity: i.quantity,
         })),
       });
 
-      // ── capture result for QR display ──────────────────────────────────
       bookingResult = response.result;
 
-      await createAndPrintTicket({
-        user,
+      // ✅ FIXED: now calls createAndPrintBulkTicket with contractorName
+      await createAndPrintBulkTicket({
+        contractorName: user.name ?? user.contractorName ?? "Contractor",
         items: selectedItems,
-        shift: shift.shiftName,
         print,
+        bookingResult: response.result,
       });
 
       navigate("/order-success", {
         state: {
           items: selectedItems,
           shift: shift.shiftName,
-          bookingResult, // ← pass QR data to order-success page
+          bookingResult,
         },
       });
     } catch (err) {
@@ -348,7 +347,7 @@ const BulkBookingPage = () => {
           err?.message ??
           "Booking failed. Please try again.",
       );
-      bookingLockRef.current = false; // release lock so user can retry
+      bookingLockRef.current = false;
     } finally {
       setIsBooking(false);
     }
@@ -571,5 +570,4 @@ const BulkBookingPage = () => {
     </div>
   );
 };
-
 export default BulkBookingPage;

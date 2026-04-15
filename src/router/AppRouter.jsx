@@ -1,6 +1,6 @@
 // src/router/AppRouter.jsx
 
-import { lazy, Suspense } from "react";
+import { lazy, Suspense, useEffect } from "react";
 import {
   HashRouter,
   Routes,
@@ -40,7 +40,6 @@ const GuestPage = lazy(() => import("@pages/guest"));
 
 // ── Staff Action Pages ────────────────────────────────────────────────────────
 const EmployeeBookingPage = lazy(() => import("@pages/employee-booking"));
-// AFTER
 const BulkBookingPage = lazy(() => import("@pages/bulk-booking"));
 
 // ── Feedback Pages ────────────────────────────────────────────────────────────
@@ -86,11 +85,34 @@ ProtectedRoute.propTypes = {
   children: PropTypes.node.isRequired,
 };
 
+// ─── Back Button Blocker ──────────────────────────────────────────────────────
+// Prevents hardware / browser back from navigating away in kiosk mode.
+
+const BackButtonBlocker = () => {
+  useEffect(() => {
+    // Push a dummy state so there's always something to "go back to"
+    window.history.pushState(null, "", window.location.href);
+
+    const blockBack = () => {
+      // Re-push whenever popstate fires — effectively cancels the back action
+      window.history.pushState(null, "", window.location.href);
+    };
+
+    window.addEventListener("popstate", blockBack);
+    return () => window.removeEventListener("popstate", blockBack);
+  }, []);
+
+  return null;
+};
+
 // ─── Router ───────────────────────────────────────────────────────────────────
 
 const AppRouter = () => {
   return (
     <HashRouter>
+      {/* ── Kiosk: block all hardware / browser back navigation ── */}
+      <BackButtonBlocker />
+
       <Suspense fallback={<PageLoader />}>
         <Routes>
           {/* ── Public ─────────────────────────────────────────────────── */}

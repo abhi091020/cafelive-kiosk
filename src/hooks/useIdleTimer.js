@@ -1,4 +1,4 @@
-// src\hooks\useIdleTimer.js
+// src/hooks/useIdleTimer.js
 
 import { useEffect, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
@@ -9,13 +9,13 @@ import { ROUTES } from "@router/AppRouter";
 // ─── useIdleTimer ─────────────────────────────────────────────────────────────
 //
 // Monitors user inactivity on any screen.
-// After VITE_IDLE_TIMEOUT ms of no interaction → wipes user + order → Splash.
+// After VITE_IDLE_TIMEOUT ms of no interaction → wipes user + order → Login.
 //
 // Events tracked: touch, mouse move, mouse click, keydown
 // Touch events are prioritised since this is a touchscreen kiosk.
 //
 // Usage:
-//   Call once per screen that needs idle detection (all screens after Splash).
+//   Call once per screen that needs idle detection (all screens after Login).
 //   Pass onIdle callback if the screen needs to do cleanup before redirect.
 //
 //   useIdleTimer();                          // basic — just resets and redirects
@@ -56,8 +56,8 @@ const useIdleTimer = ({ onIdle } = {}) => {
       clearUser();
       clearOrder();
 
-      // Return to Splash
-      navigate(ROUTES.SPLASH, { replace: true });
+      // Return to Login — replace so there's nothing to go back to
+      navigate(ROUTES.LOGIN, { replace: true });
     }, timeout);
   }, [timeout, onIdle, clearUser, clearOrder, navigate]);
 

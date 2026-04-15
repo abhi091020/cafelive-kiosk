@@ -3,58 +3,52 @@
 import {
   buildSingleItemTicketHtml,
   buildGuestTicketHtml,
+  buildBulkTicketHtml,
 } from "./ticketBuilder";
 
-// ─── createAndPrintTicket ─────────────────────────────────────────────────────
-/**
- * Prints ONE physical coupon per item unit.
- *
- * Example:
- *   items = [{ name: "Coffee", quantity: 2 }, { name: "Tea", quantity: 3 }]
- *   → prints 5 tickets: Coffee, Coffee, Tea, Tea, Tea  (each with its own QR)
- *
- * @param {Object}   options
- * @param {Object}   options.user           - { employeeId, name, department }
- * @param {Array}    options.items          - [{ name: string, quantity: number }]
- * @param {string}   options.shift          - e.g. "1st Shift"
- * @param {Function} options.print          - print({ html }) from usePrint() hook
- * @param {string}   [options.qrCodeNumber] - Unique QR ID from API response
- *                                            (e.g. "11504202610080653191").
- *                                            If provided, all tickets use this as QR content.
- * @returns {Promise<void>}
- */
+// ─── Helper: resolve item name from any field shape ───────────────────────────
+const resolveItemName = (item) =>
+  item?.nameEn ?? item?.name ?? item?.menuEnglishName ?? "Item";
+
+// ─── createAndPrintTicket (Employee) ─────────────────────────────────────────
 export const createAndPrintTicket = async ({
   user,
   items,
   shift,
   print,
   qrCodeNumber,
+  bookingResult,
 }) => {
   try {
-    // Expand items by quantity → flat list of individual item names
-    // [{ name: "Coffee", quantity: 2 }, { name: "Tea", quantity: 3 }]
-    // becomes → ["Coffee", "Coffee", "Tea", "Tea", "Tea"]
     const expandedItems = [];
 
-    for (const item of items) {
-      const qty = Number(item.quantity) || 1;
-      for (let i = 0; i < qty; i++) {
-        expandedItems.push(item.name);
+    if (Array.isArray(bookingResult) && bookingResult.length > 0) {
+      for (const booking of bookingResult) {
+        const matchedItem = items.find(
+          (i) => String(i.id) === String(booking.menuId),
+        );
+        expandedItems.push({
+          itemName: resolveItemName(matchedItem),
+          qrCodeNumber: booking.qrCodeNumber,
+        });
+      }
+    } else {
+      for (const item of items) {
+        const qty = Number(item.quantity) || 1;
+        for (let i = 0; i < qty; i++) {
+          expandedItems.push({ itemName: resolveItemName(item), qrCodeNumber });
+        }
       }
     }
 
-    console.log(
-      `[printService] Printing ${expandedItems.length} ticket(s):`,
-      expandedItems,
-    );
+    console.log(`[printService] Printing ${expandedItems.length} ticket(s)`);
 
-    // Print each ticket sequentially — one QR per physical coupon
-    for (const itemName of expandedItems) {
+    for (const { itemName, qrCodeNumber: qr } of expandedItems) {
       const html = await buildSingleItemTicketHtml({
         user,
         itemName,
         shift,
-        qrCodeNumber, // ✅ passed from API order response
+        qrCodeNumber: qr,
       });
       await print({ html });
     }
@@ -66,20 +60,11 @@ export const createAndPrintTicket = async ({
 };
 
 // ─── createAndPrintGuestTicket ────────────────────────────────────────────────
-/**
- * Builds and prints a guest QR coupon ticket silently.
- *
- * @param {Object}   options
- * @param {number}   options.requestId      - Guest request ID
- * @param {Object}   options.guestDetails   - { name, company, coGuestCount }
- * @param {Object}   options.hostDetails    - { empName, deptName }
- * @param {Function} options.print          - print({ html }) from usePrint() hook
- * @returns {Promise<void>}
- */
 export const createAndPrintGuestTicket = async ({
   requestId,
   guestDetails,
   hostDetails,
+  itemName,
   print,
 }) => {
   try {
@@ -87,10 +72,64 @@ export const createAndPrintGuestTicket = async ({
       requestId,
       guestDetails,
       hostDetails,
+      itemName,
     });
     await print({ html });
     console.log("[printService] Guest ticket printed successfully.");
   } catch (err) {
     console.error("[printService] Failed to build or print guest ticket:", err);
+  }
+};
+
+// ─── createAndPrintBulkTicket (Contractor) ───────────────────────────────────
+export const createAndPrintBulkTicket = async ({
+  contractorName,
+  items,
+  print,
+  bookingResult, // ✅ now handles bookingResult with qrCodeNumber per ticket
+}) => {
+  try {
+    const expandedItems = [];
+
+    if (Array.isArray(bookingResult) && bookingResult.length > 0) {
+      // ✅ Use QR codes from API response
+      for (const booking of bookingResult) {
+        const matchedItem = items.find(
+          (i) => String(i.id) === String(booking.menuId),
+        );
+        expandedItems.push({
+          itemName: resolveItemName(matchedItem),
+          qrCodeNumber: booking.qrCodeNumber,
+        });
+      }
+    } else {
+      // Fallback: expand by quantity
+      for (const item of items) {
+        const qty = Number(item.quantity) || 1;
+        for (let i = 0; i < qty; i++) {
+          expandedItems.push({
+            itemName: resolveItemName(item),
+            qrCodeNumber: undefined,
+          });
+        }
+      }
+    }
+
+    console.log(
+      `[printService] Printing ${expandedItems.length} bulk ticket(s)`,
+    );
+
+    for (const { itemName, qrCodeNumber } of expandedItems) {
+      const html = await buildBulkTicketHtml({
+        contractorName,
+        itemName,
+        qrCodeNumber,
+      });
+      await print({ html });
+    }
+
+    console.log("[printService] All bulk tickets printed successfully.");
+  } catch (err) {
+    console.error("[printService] Failed to build or print bulk ticket:", err);
   }
 };
