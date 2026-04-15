@@ -51,18 +51,18 @@ const CartIcon = ({ color }) => (
 );
 
 const bounceStyle = `
-  @keyframes bounceDown {
-    0%, 100% { transform: translateY(0); }
-    50%       { transform: translateY(6px); }
-  }
-  @keyframes shakeX {
-    0%, 100% { transform: translateX(0); }
-    20%       { transform: translateX(-8px); }
-    40%       { transform: translateX(8px); }
-    60%       { transform: translateX(-5px); }
-    80%       { transform: translateX(5px); }
-  }
-`;
+    @keyframes bounceDown {
+      0%, 100% { transform: translateY(0); }
+      50%       { transform: translateY(6px); }
+    }
+    @keyframes shakeX {
+      0%, 100% { transform: translateX(0); }
+      20%       { transform: translateX(-8px); }
+      40%       { transform: translateX(8px); }
+      60%       { transform: translateX(-5px); }
+      80%       { transform: translateX(5px); }
+    }
+  `;
 
 // ─── Shift Alert Dialog ───────────────────────────────────────────────────────
 const ShiftAlertDialog = ({ visible, onClose }) => {
@@ -413,10 +413,10 @@ const MenuPage = () => {
     >
       <style>{bounceStyle}</style>
       <style>{`
-        .order-scroll::-webkit-scrollbar { width: 10px; }
-        .order-scroll::-webkit-scrollbar-track { background: #F3F4F6; border-radius: 10px; }
-        .order-scroll::-webkit-scrollbar-thumb { background: #EA4D4E; border-radius: 10px; }
-      `}</style>
+          .order-scroll::-webkit-scrollbar { width: 10px; }
+          .order-scroll::-webkit-scrollbar-track { background: #F3F4F6; border-radius: 10px; }
+          .order-scroll::-webkit-scrollbar-thumb { background: #EA4D4E; border-radius: 10px; }
+        `}</style>
 
       <Header />
       <BackButton to="/home" />

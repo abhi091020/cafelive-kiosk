@@ -59,8 +59,6 @@ const getCouponType = (itemName = "") => {
 };
 
 // ─── Shared thermal CSS ───────────────────────────────────────────────────────
-// All sizes in mm — browser maps to printer dots at 203 DPI.
-// NO colors, NO shadows, NO gradients — thermal is black & white only.
 const thermalCSS = `
   @page {
     size: 72mm auto;
@@ -181,8 +179,6 @@ const thermalCSS = `
 `;
 
 // ─── QR generator ────────────────────────────────────────────────────────────
-// width:400 = high-res source → scales down cleanly on thermal dots
-// errorCorrectionLevel M = good balance of density vs scan recovery
 const generateQR = (data) =>
   QRCode.toDataURL(data, {
     width: 400,
@@ -194,15 +190,21 @@ const generateQR = (data) =>
 // ─── buildSingleItemTicketHtml ────────────────────────────────────────────────
 /**
  * One 72mm thermal receipt ticket for ONE item unit.
- * For qty > 1, call this function multiple times (handled by printService).
  *
  * @param {Object} options
- * @param {Object} options.user       - { employeeId, name, department }
- * @param {string} options.itemName   - Single item name e.g. "Coffee"
- * @param {string} [options.shift]    - e.g. "Morning Shift"
- * @returns {Promise<string>}         - Full HTML string ready for silent print
+ * @param {Object} options.user           - { employeeId, name, department }
+ * @param {string} options.itemName       - Single item name e.g. "Coffee"
+ * @param {string} [options.shift]        - e.g. "Morning Shift"
+ * @param {string} [options.qrCodeNumber] - Unique QR ID from API (e.g. "31504202611000968281").
+ *                                          QR encodes only this number.
+ * @returns {Promise<string>}             - Full HTML string ready for silent print
  */
-export const buildSingleItemTicketHtml = async ({ user, itemName, shift }) => {
+export const buildSingleItemTicketHtml = async ({
+  user,
+  itemName,
+  shift,
+  qrCodeNumber,
+}) => {
   const now = new Date();
 
   const dateStr = now.toLocaleDateString("en-GB");
@@ -213,7 +215,13 @@ export const buildSingleItemTicketHtml = async ({ user, itemName, shift }) => {
   });
 
   const couponLabel = getCouponType(itemName);
-  const qrData = `${user.employeeId}|${itemName}|${dateStr}|${timeStr}`;
+
+  // ✅ QR encodes only the qrCodeNumber from API — nothing else
+  if (!qrCodeNumber) {
+    console.error("[ticketBuilder] qrCodeNumber is missing from API response!");
+  }
+  const qrData = qrCodeNumber;
+
   const qrDataUrl = await generateQR(qrData);
 
   return `<!DOCTYPE html>

@@ -1,5 +1,20 @@
 import axiosInstance from "./axiosInstance";
 
+// ─── helper ──────────────────────────────────────────────────────────────────
+/**
+ * Throws a typed error when the backend returns HTTP 200 but statusCode !== "200".
+ * e.g. { statusCode: "500", message: "Food limit exceed!", result: null }
+ */
+const assertSuccess = (data) => {
+  if (data?.statusCode !== "200") {
+    const err = new Error(data?.message ?? "Request failed");
+    err.serverMessage =
+      data?.message ?? "Something went wrong. Please try again.";
+    throw err;
+  }
+};
+
+// ─── bookOrder ────────────────────────────────────────────────────────────────
 /**
  * bookOrder — book a single employee meal order.
  * POST /booking/bookOrder
@@ -22,9 +37,14 @@ export const bookOrder = async (payload) => {
   };
 
   const response = await axiosInstance.post("/booking/bookOrder", body);
+
+  // ✅ Catches: "Food limit exceed!", "Already booked", etc.
+  assertSuccess(response.data);
+
   return response.data;
 };
 
+// ─── bookBulkOrder ────────────────────────────────────────────────────────────
 /**
  * bookBulkOrder — book a bulk meal order for multiple employees.
  * POST /booking/bulkOrder
@@ -46,9 +66,14 @@ export const bookBulkOrder = async (payload) => {
   };
 
   const response = await axiosInstance.post("/booking/bulkOrder", body);
+
+  // ✅ Same guard for bulk orders
+  assertSuccess(response.data);
+
   return response.data;
 };
 
+// ─── getOrder ─────────────────────────────────────────────────────────────────
 /**
  * getOrder — fetch a single order by ID.
  * GET /order/:orderId

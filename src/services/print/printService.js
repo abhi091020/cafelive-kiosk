@@ -14,13 +14,22 @@ import {
  *   → prints 5 tickets: Coffee, Coffee, Tea, Tea, Tea  (each with its own QR)
  *
  * @param {Object}   options
- * @param {Object}   options.user    - { employeeId, name, department }
- * @param {Array}    options.items   - [{ name: string, quantity: number }]
- * @param {string}   options.shift   - e.g. "1st Shift"
- * @param {Function} options.print   - print({ html }) from usePrint() hook
+ * @param {Object}   options.user           - { employeeId, name, department }
+ * @param {Array}    options.items          - [{ name: string, quantity: number }]
+ * @param {string}   options.shift          - e.g. "1st Shift"
+ * @param {Function} options.print          - print({ html }) from usePrint() hook
+ * @param {string}   [options.qrCodeNumber] - Unique QR ID from API response
+ *                                            (e.g. "11504202610080653191").
+ *                                            If provided, all tickets use this as QR content.
  * @returns {Promise<void>}
  */
-export const createAndPrintTicket = async ({ user, items, shift, print }) => {
+export const createAndPrintTicket = async ({
+  user,
+  items,
+  shift,
+  print,
+  qrCodeNumber,
+}) => {
   try {
     // Expand items by quantity → flat list of individual item names
     // [{ name: "Coffee", quantity: 2 }, { name: "Tea", quantity: 3 }]
@@ -41,7 +50,12 @@ export const createAndPrintTicket = async ({ user, items, shift, print }) => {
 
     // Print each ticket sequentially — one QR per physical coupon
     for (const itemName of expandedItems) {
-      const html = await buildSingleItemTicketHtml({ user, itemName, shift });
+      const html = await buildSingleItemTicketHtml({
+        user,
+        itemName,
+        shift,
+        qrCodeNumber, // ✅ passed from API order response
+      });
       await print({ html });
     }
 

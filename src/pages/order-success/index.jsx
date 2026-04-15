@@ -65,15 +65,17 @@ const OrderSuccessPage = () => {
   const { print } = usePrint();
 
   // ── Data passed from the booking page via navigate(state) ──────────────
-  // Expected shape:
-  //   location.state = {
-  //     user:  { employeeId, name, department },
-  //     items: [{ name: "Coffee", quantity: 2 }, { name: "Tea", quantity: 3 }],
-  //     shift: "1st Shift"
-  //   }
   const user = location.state?.user || null;
   const items = location.state?.items || [];
   const shift = location.state?.shift || "";
+
+  // bookingResult from API is: { result: [{ bookingId, qrCodeNumber, ... }] }
+  // menu/index.jsx passes `response.result` which is the array itself.
+  // ✅ Safely extract qrCodeNumber from index [0] whether it's an array or object.
+  const bookingResult = location.state?.bookingResult ?? null;
+  const qrCodeNumber = Array.isArray(bookingResult)
+    ? (bookingResult[0]?.qrCodeNumber ?? null)
+    : (bookingResult?.qrCodeNumber ?? null);
 
   const [countdown, setCountdown] = useState(3);
   const [confetti] = useState(() => generateConfetti(70));
@@ -82,19 +84,19 @@ const OrderSuccessPage = () => {
   const hasPrinted = useRef(false);
 
   // ── Silent print on mount ───────────────────────────────────────────────
-  // Runs immediately when success page loads.
-  // One QR ticket is printed per item unit (quantity expanded).
   useEffect(() => {
-    if (hasPrinted.current) return; // already triggered
-    if (!user || items.length === 0) return; // nothing to print
+    if (hasPrinted.current) return;
+    if (!user || items.length === 0) return;
 
     hasPrinted.current = true;
 
-    createAndPrintTicket({ user, items, shift, print }).catch((err) =>
-      console.error("[OrderSuccessPage] Print error:", err),
+    console.log("[OrderSuccessPage] qrCodeNumber →", qrCodeNumber);
+
+    // ✅ Pass qrCodeNumber — QR will encode only this number (e.g. "31504202611000968281")
+    createAndPrintTicket({ user, items, shift, print, qrCodeNumber }).catch(
+      (err) => console.error("[OrderSuccessPage] Print error:", err),
     );
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
-  // ↑ Empty deps — intentional. We only want this on first mount.
 
   // ── Countdown → redirect ────────────────────────────────────────────────
   useEffect(() => {
@@ -164,7 +166,6 @@ const OrderSuccessPage = () => {
               "popIn 0.55s cubic-bezier(0.175, 0.885, 0.32, 1.275) both",
           }}
         >
-          {/* Image */}
           <img
             src={orderCompleteImg}
             alt="Order Complete"
@@ -180,7 +181,6 @@ const OrderSuccessPage = () => {
             }}
           />
 
-          {/* Success text — absolutely positioned over the bottom of the image */}
           <h1
             style={{
               position: "absolute",
