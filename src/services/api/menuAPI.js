@@ -34,8 +34,15 @@ export const getShifts = async () => {
 // ─── getDayWiseFoodAllocation ─────────────────────────────────────────────────
 export const getDayWiseFoodAllocation = async (shiftId) => {
   const allocationDate = getTodayDate();
-  const response = await menuClient.get(
-    `/food-allocation/getDayWiseFoodAllocationByDate/${allocationDate}/${shiftId}`,
-  );
-  return response.data.result; // { mealTypes: [...] }
+  try {
+    const response = await menuClient.get(
+      `/food-allocation/getDayWiseFoodAllocationByDate/${allocationDate}/${shiftId}`,
+    );
+    return response.data.result ?? { mealTypes: [] };
+  } catch (err) {
+    if (err.response?.status === 404) {
+      return { mealTypes: [] };
+    }
+    throw err;
+  }
 };

@@ -1,76 +1,50 @@
-// src\services\api\guestAPI.js
-
 import axiosInstance from "./axiosInstance";
-import mockGuests from "@mock/mockGuests";
-
-// ─── getGuests ────────────────────────────────────────────────────────────────
 
 /**
- * getGuests — fetch all guests registered for today.
- *
- * @returns {Promise<Array>} - List of guest objects
- * @throws  {Error} - Enriched error with errorKey
+ * getGuests — fetch all guest booking requests.
+ * GET /guest/getAll
  */
 export const getGuests = async () => {
-  if (import.meta.env.VITE_DEV_MODE === "true") {
-    await new Promise((r) => setTimeout(r, 500));
-    return mockGuests;
-  }
-
-  const response = await axiosInstance.get("/guests");
-  return response.data;
+  const response = await axiosInstance.get("/guest/getAll");
+  return response.data.result;
 };
 
-// ─── searchGuests ─────────────────────────────────────────────────────────────
-
 /**
- * searchGuests — search today's guest list by name.
- * In dev mode — filters mockGuests locally to simulate server-side search.
- *
- * @param  {string} name - Partial or full guest name
- * @returns {Promise<Array>} - Filtered list of matching guests
- * @throws  {Error} - Enriched error with errorKey
+ * searchGuests — filter guests by name.
+ * GET /guests/search?name=...
  */
 export const searchGuests = async (name) => {
-  if (!name || !name.trim()) {
-    return [];
-  }
-
-  if (import.meta.env.VITE_DEV_MODE === "true") {
-    await new Promise((r) => setTimeout(r, 400));
-    const query = name.trim().toLowerCase();
-    return mockGuests.filter((g) => g.guestName.toLowerCase().includes(query));
-  }
+  if (!name || !name.trim()) return [];
 
   const params = new URLSearchParams({ name: name.trim() });
   const response = await axiosInstance.get(
     `/guests/search?${params.toString()}`,
   );
-  return response.data;
+  return response.data.result;
 };
 
-// ─── confirmGuest ─────────────────────────────────────────────────────────────
+/**
+ * getGuestByRequestId — fetch a single guest by request ID.
+ * GET /guest/search/:requestId
+ */
+export const getGuestByRequestId = async (requestId) => {
+  if (!requestId) throw new Error("requestId is required");
+
+  const response = await axiosInstance.get(`/guest/search/${requestId}`);
+  return response.data.result;
+};
 
 /**
- * confirmGuest — confirm a guest meal booking.
- *
- * @param  {Object} payload
- * @param  {string} payload.guestId   - Guest ID
- * @param  {string} payload.requestId - Request ID entered via NumPad
- * @param  {string} payload.employeeId - Host employee ID
- * @returns {Promise<Object>} - Confirmation response
- * @throws  {Error} - Enriched error with errorKey
+ * confirmGuest — confirm a guest booking.
+ * POST /guest/confirm
  */
 export const confirmGuest = async (payload) => {
-  if (!payload?.guestId || !payload?.requestId) {
-    throw new Error("guestId and requestId are required for confirmGuest");
+  if (!payload?.requestId) {
+    throw new Error("requestId is required for confirmGuest");
   }
 
-  if (import.meta.env.VITE_DEV_MODE === "true") {
-    await new Promise((r) => setTimeout(r, 700));
-    return { success: true, guestId: payload.guestId, status: "CONFIRMED" };
-  }
-
-  const response = await axiosInstance.post("/guests/confirm", payload);
+  const response = await axiosInstance.post("/guest/confirm", {
+    requestId: payload.requestId,
+  });
   return response.data;
 };

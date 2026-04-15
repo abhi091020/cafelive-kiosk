@@ -2,25 +2,14 @@
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { ROUTES } from "@router/AppRouter";
+import { useUser } from "@context/UserContext";
 
 const ActionButtons = () => {
   const navigate = useNavigate();
   const { t } = useTranslation();
+  const { user } = useUser();
 
-  const handleEmployeeBooking = () => {
-    console.log("Employee Booking clicked");
-    navigate(ROUTES.EMPLOYEE_BOOKING);
-  };
-
-  const handleGuestBooking = () => {
-    console.log("Guest Booking clicked");
-    navigate(ROUTES.GUEST_BOOKING);
-  };
-
-  const handleBulkOrderBooking = () => {
-    console.log("Bulk Order Booking clicked");
-    navigate(ROUTES.BULK_BOOKING);
-  };
+  const isContractor = user?.userType === "contractor";
 
   const baseButtonStyle = {
     width: "100%",
@@ -35,6 +24,7 @@ const ActionButtons = () => {
     WebkitTapHighlightColor: "transparent",
     transition: "transform 0.1s ease, opacity 0.1s ease",
     letterSpacing: "0.02em",
+    backgroundColor: "#EA4D4E",
   };
 
   const handlePointerDown = (e) => {
@@ -69,32 +59,35 @@ const ActionButtons = () => {
         gap: "clamp(0.8vh, 1.0vh, 1.5vh)",
       }}
     >
-      {/* Employee Booking */}
-      <button
-        onClick={handleEmployeeBooking}
-        style={{ ...baseButtonStyle, backgroundColor: "#EA4D4E" }}
-        {...pointerHandlers}
-      >
-        {t("staffHome.employeeBooking")}
-      </button>
+      {isContractor ? (
+        /* ── Contractor: Bulk Order only ── */
+        <button
+          onClick={() => navigate(ROUTES.BULK_BOOKING)}
+          style={baseButtonStyle}
+          {...pointerHandlers}
+        >
+          {t("staffHome.bulkBooking")}
+        </button>
+      ) : (
+        /* ── Staff: Employee Booking + Guest Booking ── */
+        <>
+          <button
+            onClick={() => navigate(ROUTES.EMPLOYEE_BOOKING)}
+            style={baseButtonStyle}
+            {...pointerHandlers}
+          >
+            {t("staffHome.employeeBooking")}
+          </button>
 
-      {/* Guest Booking */}
-      <button
-        onClick={handleGuestBooking}
-        style={{ ...baseButtonStyle, backgroundColor: "#EA4D4E" }}
-        {...pointerHandlers}
-      >
-        {t("staffHome.guestBooking")}
-      </button>
-
-      {/* Bulk Order Booking */}
-      <button
-        onClick={handleBulkOrderBooking}
-        style={{ ...baseButtonStyle, backgroundColor: "#EA4D4E" }}
-        {...pointerHandlers}
-      >
-        {t("staffHome.bulkBooking")}
-      </button>
+          <button
+            onClick={() => navigate(ROUTES.GUEST_BOOKING)}
+            style={baseButtonStyle}
+            {...pointerHandlers}
+          >
+            {t("staffHome.guestBooking")}
+          </button>
+        </>
+      )}
     </div>
   );
 };

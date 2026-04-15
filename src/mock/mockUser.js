@@ -6,14 +6,14 @@
 // Update field names here if the backend contract changes.
 
 const mockUser = {
-  id:           "EMP-10042",
-  employeeId:   "MUK-10042",
-  name:         "Rajesh Sharma",
-  department:   "Production",
-  shift:        "Morning",   // "Morning" | "Evening" | "Night"
+  id: "EMP-10042",
+  employeeId: "MUK-10042",
+  name: "Rajesh Sharma",
+  department: "Production",
+  shift: "Morning", // "Morning" | "Evening" | "Night"
   canBookGuest: true,
-  branchId:     1,           // ← added: used to filter menu by branch
-  branchName:   "Mumbai",    // ← added: display/debug use
+  branchId: 1, // ← added: used to filter menu by branch
+  branchName: "Mumbai", // ← added: display/debug use
 };
 
 export default mockUser;

@@ -1,17 +1,21 @@
 // src/pages/order-success/index.jsx
 //
 // Features:
+//  • Triggers silent QR print on mount — one ticket per item unit
+//    e.g. [Coffee x2, Tea x3] → prints 5 tickets silently in background
 //  • Big illustration (78vw, max 860px)
 //  • CSS confetti burst on mount
 //  • Pulse glow ring behind image
 //  • Gradient success text overlaid on bottom of image
-//  • 5-second countdown → redirect to "/"
+//  • 3-second countdown → redirect to "/login"
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { Header, Footer } from "@common";
 import orderCompleteImg from "@assets/ordersuccess2.png";
+import usePrint from "@hooks/usePrint";
+import { createAndPrintTicket } from "@services/print/printService";
 
 // ─── Confetti piece component ─────────────────────────────────────────────────
 const CONFETTI_COLORS = [
@@ -58,17 +62,44 @@ const OrderSuccessPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { t } = useTranslation();
+  const { print } = usePrint();
 
+  // ── Data passed from the booking page via navigate(state) ──────────────
+  // Expected shape:
+  //   location.state = {
+  //     user:  { employeeId, name, department },
+  //     items: [{ name: "Coffee", quantity: 2 }, { name: "Tea", quantity: 3 }],
+  //     shift: "1st Shift"
+  //   }
+  const user = location.state?.user || null;
   const items = location.state?.items || [];
+  const shift = location.state?.shift || "";
 
-  const [countdown, setCountdown] = useState(5);
+  const [countdown, setCountdown] = useState(3);
   const [confetti] = useState(() => generateConfetti(70));
 
+  // Guard so printing runs only once even under StrictMode double-invoke
+  const hasPrinted = useRef(false);
+
+  // ── Silent print on mount ───────────────────────────────────────────────
+  // Runs immediately when success page loads.
+  // One QR ticket is printed per item unit (quantity expanded).
+  useEffect(() => {
+    if (hasPrinted.current) return; // already triggered
+    if (!user || items.length === 0) return; // nothing to print
+
+    hasPrinted.current = true;
+
+    createAndPrintTicket({ user, items, shift, print }).catch((err) =>
+      console.error("[OrderSuccessPage] Print error:", err),
+    );
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  // ↑ Empty deps — intentional. We only want this on first mount.
+
   // ── Countdown → redirect ────────────────────────────────────────────────
-  // NOTE: timer renamed to avoid shadowing `t` from useTranslation
   useEffect(() => {
     if (countdown <= 0) {
-      navigate("/");
+      navigate("/login");
       return;
     }
     const timer = setTimeout(() => setCountdown((c) => c - 1), 1000);

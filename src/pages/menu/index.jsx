@@ -10,11 +10,9 @@ import {
   BackButton,
 } from "@common";
 import { BookOrderCard } from "@components/menu";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useUser } from "@context/UserContext";
 import { useTranslation } from "react-i18next";
-import usePrint from "@hooks/usePrint";
-import { createAndPrintTicket } from "@services/print/printService";
 import { bookOrder } from "@services/api/orderAPI";
 
 // ─── Icons ────────────────────────────────────────────────────────────────────
@@ -162,7 +160,7 @@ const ShiftAlertDialog = ({ visible, onClose }) => {
   );
 };
 
-// ✅ NEW: Booking Error Dialog — shows backend message to user
+// ─── Booking Error Dialog ─────────────────────────────────────────────────────
 const BookingErrorDialog = ({ message, onClose }) => {
   if (!message) return null;
   return (
@@ -262,11 +260,15 @@ const BookingErrorDialog = ({ message, onClose }) => {
 // ─── MenuPage ─────────────────────────────────────────────────────────────────
 const MenuPage = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const scrollRef = useRef(null);
+  const bookingLockRef = useRef(false);
   const { user } = useUser();
-  const { print } = usePrint();
   const { t, i18n } = useTranslation();
   const lang = i18n.language;
+
+  // staffId is set when staff books on behalf of an employee, null for self-booking
+  const staffId = location.state?.staffId ?? null;
 
   const [selectedItems, setSelectedItems] = useState([]);
   const [shift, setShift] = useState(null);
@@ -275,7 +277,6 @@ const MenuPage = () => {
   const [canScrollDown, setCanScrollDown] = useState(false);
   const [scrollRatio, setScrollRatio] = useState(0);
   const [isBooking, setIsBooking] = useState(false);
-  // ✅ NEW: holds backend error message to show in dialog
   const [bookingError, setBookingError] = useState(null);
 
   const getItemName = (item) => {
@@ -341,42 +342,52 @@ const MenuPage = () => {
   const handleDialogYes = () => setShowDialog(false);
 
   const handleDialogNo = async () => {
+    if (bookingLockRef.current) return;
+    bookingLockRef.current = true;
+
     setShowDialog(false);
     setIsBooking(true);
 
+    let bookingResult = null;
+
     try {
-      await bookOrder({
+      const response = await bookOrder({
         employeeId: user.employeeId,
         shiftId: shift.shiftId,
+        staffId,
+        // ✅ i.id IS the menuId (set as String(menu.menuId) in BookOrderCard)
         items: selectedItems.map((i) => ({
-          id: i.id,
-          menuId: i.menuId,
+          menuId: i.id,
           quantity: i.quantity,
         })),
       });
+
+      bookingResult = response.result;
     } catch (err) {
       console.error(
         "[MenuPage] bookOrder failed:",
         err.errorKey ?? err.message,
       );
-      // ✅ show backend message if available, else generic fallback
       setBookingError(err.serverMessage ?? "Booking failed. Please try again.");
       setIsBooking(false);
-      return; // ⛔ don't print or navigate
+      bookingLockRef.current = false;
+      return;
     }
 
-    await createAndPrintTicket({
-      user,
-      items: selectedItems,
-      shift: shift?.shiftName,
-      print,
-    });
-
     setIsBooking(false);
+    bookingLockRef.current = false;
 
     setTimeout(() => {
       navigate("/order-success", {
-        state: { items: selectedItems, shift: shift?.shiftName },
+        state: {
+          user,
+          items: selectedItems.map((i) => ({
+            ...i,
+            name: getItemName(i),
+          })),
+          shift: shift?.shiftName,
+          bookingResult,
+        },
       });
     }, 150);
   };
@@ -727,7 +738,6 @@ const MenuPage = () => {
         onClose={() => setShowShiftAlert(false)}
       />
 
-      {/* ✅ NEW: shows backend error message e.g. "Booking not allowed at this time" */}
       <BookingErrorDialog
         message={bookingError}
         onClose={() => setBookingError(null)}

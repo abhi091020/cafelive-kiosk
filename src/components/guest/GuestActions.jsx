@@ -1,14 +1,11 @@
 // src/components/guest/GuestActions.jsx
 
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import ConfirmDialog from "@components/common/ConfirmDialog";
-import { ROUTES } from "@router/AppRouter";
 
 const GuestActions = ({ canPrint, onPrint, onCancel, reqId }) => {
   const { t } = useTranslation();
-  const navigate = useNavigate();
   const [showConfirm, setShowConfirm] = useState(false);
 
   const handlePointerDown = (e) => {
@@ -35,9 +32,16 @@ const GuestActions = ({ canPrint, onPrint, onCancel, reqId }) => {
     e.currentTarget.style.backgroundColor = "#FFFFFF";
   };
 
-  const handlePrintClick  = () => { if (canPrint) setShowConfirm(true); };
-  const handleConfirmOk   = () => { setShowConfirm(false); onPrint?.(); navigate(ROUTES.ORDER_SUCCESS); };
-  const handleConfirmCancel = () => { setShowConfirm(false); };
+  const handlePrintClick = () => {
+    if (canPrint) setShowConfirm(true);
+  };
+  const handleConfirmOk = () => {
+    setShowConfirm(false);
+    onPrint?.();
+  };
+  const handleConfirmCancel = () => {
+    setShowConfirm(false);
+  };
 
   const baseButtonStyle = {
     flex: 1,
@@ -87,9 +91,15 @@ const GuestActions = ({ canPrint, onPrint, onCancel, reqId }) => {
             cursor: canPrint ? "pointer" : "not-allowed",
             opacity: canPrint ? 1 : 0.5,
           }}
-          onPointerDown={(e) => { if (canPrint) handlePointerDown(e); }}
-          onPointerUp={(e) => { if (canPrint) handlePointerUp(e); }}
-          onPointerLeave={(e) => { if (canPrint) handlePointerUp(e); }}
+          onPointerDown={(e) => {
+            if (canPrint) handlePointerDown(e);
+          }}
+          onPointerUp={(e) => {
+            if (canPrint) handlePointerUp(e);
+          }}
+          onPointerLeave={(e) => {
+            if (canPrint) handlePointerUp(e);
+          }}
         >
           {t("general.print")}
         </button>

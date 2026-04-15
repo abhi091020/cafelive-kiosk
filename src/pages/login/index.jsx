@@ -30,10 +30,17 @@ const LoginPage = () => {
 
     try {
       const result = await validateUser(empId);
-      // console.log("VALIDATE RESULT:", result); // ← add this
+
       setUser(result);
 
-      if (result.empCategoryName?.toLowerCase().trim() === "staff") {
+      // ── Routing logic ─────────────────────────────────────────
+      // Staff   → canteenStaffId present       → /staff-home
+      // Contractor → employmentType OnContract  → /staff-home
+      // Employee   → employmentType OnRoll      → /home
+      const isStaff = !!result.canteenStaffId;
+      const isContractor = result.employmentType === "OnContract";
+
+      if (isStaff || isContractor) {
         navigate(ROUTES.STAFF_HOME);
       } else {
         navigate(ROUTES.HOME);
@@ -171,7 +178,7 @@ const LoginPage = () => {
         <div
           style={{
             position: "absolute",
-            top: "clamp(44vh, 48vh, 52vh)", // ← changed this too
+            top: "clamp(44vh, 48vh, 52vh)",
             left: "50%",
             transform: "translateX(-50%)",
             zIndex: 2,
@@ -194,7 +201,7 @@ const LoginPage = () => {
         <div
           style={{
             position: "absolute",
-            top: "clamp(44vh, 48vh, 52vh)", // ← changed
+            top: "clamp(44vh, 48vh, 52vh)",
             left: "50%",
             transform: "translateX(-50%)",
             zIndex: 2,

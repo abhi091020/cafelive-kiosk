@@ -10,15 +10,15 @@ import {
   ConfirmDialog,
   BackButton,
 } from "@common";
-import {
-  BulkOrderCard,
-  BulkOrderItem,
-  BulkOrderActions,
-} from "@components/bulk-booking";
+import { BookOrderCard } from "@components/menu";
+import { BulkOrderItem, BulkOrderActions } from "@components/bulk-booking";
 import { useUser } from "@context/UserContext";
 import { useTranslation } from "react-i18next";
 import usePrint from "@hooks/usePrint";
 import { createAndPrintTicket } from "@services/print/printService";
+import { bookBulkOrder } from "@services/api/orderAPI";
+
+// ─── Animations ───────────────────────────────────────────────────────────────
 
 const bounceStyle = `
   @keyframes bounceDown {
@@ -33,6 +33,8 @@ const bounceStyle = `
     80%       { transform: translateX(5px); }
   }
 `;
+
+// ─── Shift Alert Dialog ───────────────────────────────────────────────────────
 
 const ShiftAlertDialog = ({ visible, onClose }) => {
   const { t } = useTranslation();
@@ -129,25 +131,124 @@ const ShiftAlertDialog = ({ visible, onClose }) => {
   );
 };
 
+// ─── Booking Error Dialog ─────────────────────────────────────────────────────
+
+const BookingErrorDialog = ({ message, onClose }) => {
+  if (!message) return null;
+  return (
+    <div
+      style={{
+        position: "fixed",
+        inset: 0,
+        background: "rgba(0,0,0,0.45)",
+        zIndex: 100,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+      }}
+      onClick={onClose}
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        style={{
+          background: "#fff",
+          borderRadius: "16px",
+          padding: "40px 48px",
+          boxShadow: "0 8px 40px rgba(0,0,0,0.18)",
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          gap: "16px",
+          minWidth: "420px",
+          maxWidth: "560px",
+          animation: "shakeX 0.4s ease",
+        }}
+      >
+        <div
+          style={{
+            width: "64px",
+            height: "64px",
+            borderRadius: "50%",
+            background: "#FEF2F2",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none">
+            <path
+              d="M12 9v4M12 17h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"
+              stroke="#B91C1C"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+        </div>
+        <p
+          style={{
+            margin: 0,
+            fontSize: "1.3rem",
+            fontWeight: 700,
+            color: "#050404",
+            textAlign: "center",
+          }}
+        >
+          Booking Failed
+        </p>
+        <p
+          style={{
+            margin: 0,
+            fontSize: "1.05rem",
+            color: "#6B7280",
+            textAlign: "center",
+            lineHeight: 1.6,
+          }}
+        >
+          {message}
+        </p>
+        <button
+          onClick={onClose}
+          style={{
+            marginTop: "8px",
+            padding: "12px 40px",
+            background: "linear-gradient(90deg, #EA4D4E 0%, #B91C1C 100%)",
+            color: "#fff",
+            border: "none",
+            borderRadius: "10px",
+            fontSize: "1.05rem",
+            fontWeight: 700,
+            cursor: "pointer",
+            boxShadow: "0 4px 14px rgba(234,77,78,0.35)",
+          }}
+        >
+          OK, Got It
+        </button>
+      </div>
+    </div>
+  );
+};
+
+// ─── Page ─────────────────────────────────────────────────────────────────────
+
 const BulkBookingPage = () => {
   const navigate = useNavigate();
   const scrollRef = useRef(null);
+  const bookingLockRef = useRef(false); // ← prevent duplicate submissions
   const { user } = useUser();
   const { print } = usePrint();
   const { t } = useTranslation();
 
-  const [selectedItems, setSelectedItems] = useState([]);
   const [shift, setShift] = useState(null);
+  const [selectedItems, setSelectedItems] = useState([]);
   const [showDialog, setShowDialog] = useState(false);
   const [showShiftAlert, setShowShiftAlert] = useState(false);
   const [canScrollDown, setCanScrollDown] = useState(false);
   const [scrollRatio, setScrollRatio] = useState(0);
+  const [isBooking, setIsBooking] = useState(false);
+  const [bookingError, setBookingError] = useState(null);
 
-  const selectedItemIds = useMemo(
-    () => new Set(selectedItems.map((i) => i.id)),
-    [selectedItems],
-  );
-
+  // ── Scroll indicator ────────────────────────────────────────────────────────
   const updateScroll = () => {
     const el = scrollRef.current;
     if (!el) return;
@@ -159,6 +260,17 @@ const BulkBookingPage = () => {
   useEffect(() => {
     updateScroll();
   }, [selectedItems]);
+
+  // ── Item handlers ───────────────────────────────────────────────────────────
+  const selectedItemIds = useMemo(
+    () => new Set(selectedItems.map((i) => i.id)),
+    [selectedItems],
+  );
+
+  const handleShiftChange = (newShift) => {
+    setShift(newShift);
+    setSelectedItems([]);
+  };
 
   const handleItemToggle = (item) =>
     setSelectedItems((prev) => {
@@ -176,6 +288,7 @@ const BulkBookingPage = () => {
   const handleDelete = (itemId) =>
     setSelectedItems((prev) => prev.filter((i) => i.id !== itemId));
 
+  // ── Booking ─────────────────────────────────────────────────────────────────
   const isEnabled = selectedItems.length > 0;
 
   const handleBookMeal = () => {
@@ -190,13 +303,58 @@ const BulkBookingPage = () => {
   const handleDialogYes = () => setShowDialog(false);
 
   const handleDialogNo = async () => {
+    // ── prevent duplicate submissions ──────────────────────────────────────
+    if (bookingLockRef.current) return;
+    bookingLockRef.current = true;
+
     setShowDialog(false);
-    await createAndPrintTicket({ user, items: selectedItems, shift, print });
-    setTimeout(() => {
-      navigate("/order-success", { state: { items: selectedItems, shift } });
-    }, 150);
+    setIsBooking(true);
+    setBookingError(null);
+
+    let bookingResult = null;
+
+    try {
+      const response = await bookBulkOrder({
+        empId: user.id,
+        shiftId: shift.shiftId,
+        deviceId: 1,
+        items: selectedItems.map((i) => ({
+          menuId: i.menuId,
+          quantity: i.quantity,
+        })),
+      });
+
+      // ── capture result for QR display ──────────────────────────────────
+      bookingResult = response.result;
+
+      await createAndPrintTicket({
+        user,
+        items: selectedItems,
+        shift: shift.shiftName,
+        print,
+      });
+
+      navigate("/order-success", {
+        state: {
+          items: selectedItems,
+          shift: shift.shiftName,
+          bookingResult, // ← pass QR data to order-success page
+        },
+      });
+    } catch (err) {
+      console.error("[BulkBooking] bookBulkOrder failed:", err);
+      setBookingError(
+        err?.serverMessage ??
+          err?.message ??
+          "Booking failed. Please try again.",
+      );
+      bookingLockRef.current = false; // release lock so user can retry
+    } finally {
+      setIsBooking(false);
+    }
   };
 
+  // ── Scroll dots ─────────────────────────────────────────────────────────────
   const DOT_COUNT = Math.min(selectedItems.length, 5);
   const activeDot = Math.round(scrollRatio * (DOT_COUNT - 1));
 
@@ -219,23 +377,21 @@ const BulkBookingPage = () => {
         .bulk-order-scroll::-webkit-scrollbar { width: 10px; }
         .bulk-order-scroll::-webkit-scrollbar-track { background: #F3F4F6; border-radius: 10px; }
         .bulk-order-scroll::-webkit-scrollbar-thumb { background: #EA4D4E; border-radius: 10px; }
-        input[type=number]::-webkit-inner-spin-button,
-        input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
-        input[type=number] { -moz-appearance: textfield; }
       `}</style>
 
       <Header />
-      <BackButton to="/home" />
+      <BackButton to="/staff-home" />
       <UserWelcome />
       <DateTimeDisplay />
 
-      <BulkOrderCard
+      <BookOrderCard
         selectedItemIds={selectedItemIds}
         onItemToggle={handleItemToggle}
         shift={shift}
-        onShiftChange={setShift}
+        onShiftChange={handleShiftChange}
       />
 
+      {/* ── Selected items + Book button ──────────────────────────────────── */}
       <div
         style={{
           position: "absolute",
@@ -284,10 +440,11 @@ const BulkBookingPage = () => {
                   }}
                 >
                   {selectedItems.length}{" "}
-                  {selectedItems.length === 1 ? t("menu.item") : t("menu.items")}
+                  {selectedItems.length === 1
+                    ? t("menu.item")
+                    : t("menu.items")}
                 </div>
               </div>
-
               <span
                 style={{
                   fontSize: "clamp(0.85rem, 1.2vw, 1rem)",
@@ -385,7 +542,10 @@ const BulkBookingPage = () => {
           </>
         )}
 
-        <BulkOrderActions isEnabled={isEnabled} onClick={handleBookMeal} />
+        <BulkOrderActions
+          isEnabled={isEnabled && !isBooking}
+          onClick={handleBookMeal}
+        />
       </div>
 
       <Footer />
@@ -402,6 +562,11 @@ const BulkBookingPage = () => {
       <ShiftAlertDialog
         visible={showShiftAlert}
         onClose={() => setShowShiftAlert(false)}
+      />
+
+      <BookingErrorDialog
+        message={bookingError}
+        onClose={() => setBookingError(null)}
       />
     </div>
   );

@@ -94,7 +94,9 @@ const GuestSearchBar = ({
           <div className="guest-numpad-actions">
             <button
               className="guest-numpad-submit"
-              onClick={() => { if (value) onEnter(); }}
+              onClick={() => {
+                if (value) onEnter();
+              }}
               onPointerDown={handlePointerDown}
               onPointerUp={handlePointerUp}
               onPointerLeave={handlePointerUp}
@@ -103,7 +105,10 @@ const GuestSearchBar = ({
             </button>
             <button
               className="guest-numpad-cancel"
-              onClick={() => { onChange(""); setShowNumPad(false); }}
+              onClick={() => {
+                onChange("");
+                setShowNumPad(false);
+              }}
               onPointerDown={handlePointerDownCancel}
               onPointerUp={handlePointerUpCancel}
               onPointerLeave={handlePointerUpCancel}
@@ -116,7 +121,9 @@ const GuestSearchBar = ({
             <NumPad
               value={value}
               onChange={onChange}
-              onEnter={() => { if (value) onEnter(); }}
+              onEnter={() => {
+                if (value) onEnter();
+              }}
             />
           </div>
         </>

@@ -39,17 +39,38 @@ export const UserProvider = ({ children }) => {
       return;
     }
 
-    const normalised = {
-      id: String(userData.empId ?? userData.id ?? ""),
-      employeeId: String(userData.empId ?? userData.id ?? ""),
-      name: userData.empName ?? userData.name ?? "Employee",
-      department: userData.deptName ?? userData.department ?? "—",
-      shift: userData.shift ?? "General",
-      canBookGuest: userData.canBookGuest ?? false,
-      branchId: userData.branchId ?? null,
-      branchName: userData.branchName ?? "",
-      empCategoryName: userData.empCategoryName ?? "",
-    };
+    // ── Staff response: { canteenStaffId, staffName }
+    const isStaff = !!userData.canteenStaffId;
+
+    const normalised = isStaff
+      ? {
+          id: String(userData.canteenStaffId),
+          employeeId: String(userData.canteenStaffId),
+          name: userData.staffName ?? "Staff",
+          department: "—",
+          shift: "General",
+          canBookGuest: false,
+          branchId: null,
+          branchName: "",
+          empCategoryName: "", // falsy → login routes to STAFF_HOME
+          userType: "staff",
+        }
+      : {
+          id: String(userData.empId ?? ""),
+          employeeId: String(userData.empId ?? ""),
+          name: userData.empName ?? "Employee",
+          department: userData.deptName ?? "—",
+          shift: userData.shift ?? "General",
+          canBookGuest: userData.canBookGuest ?? false,
+          branchId: userData.branchId ?? null,
+          branchName: userData.branchName ?? "",
+          empCategoryName: userData.empCategoryName ?? "",
+          employmentType: userData.employmentType ?? "", // "OnRoll" | "OnContract"
+          userType:
+            userData.employmentType === "OnContract"
+              ? "contractor"
+              : "employee",
+        };
 
     setUserState(normalised);
   }, []);

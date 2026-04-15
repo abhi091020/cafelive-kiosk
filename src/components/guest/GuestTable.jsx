@@ -2,50 +2,19 @@
 
 import { useTranslation } from "react-i18next";
 
-const ROWS = 15;
-
-const PLACEHOLDER_IDS = [
-  1234, 1580, 6789, 3456, 8765, 3452, 2341, 5678, 9012, 4321, 7890, 6543, 2109,
-  5432, 1357,
-];
-const PLACEHOLDER_NAMES = [
-  "Rahul Pardeshi", "Tushar Kumavat", "Saurabh Bhalerao", "Pratik Patil",
-  "Ketan Patil", "Lalit Beldar", "Amit Sharma", "Rohan Desai",
-  "Nikhil Jadhav", "Sachin More", "Vishal Kulkarni", "Priya Nair",
-  "Deepak Yadav", "Sneha Joshi", "Manoj Tiwari",
-];
-const PLACEHOLDER_COMPANIES = [
-  "Hatts Of Digital", "Daccess Security System", "Brawizz Tech Pvt", "TATA",
-  "Bosch", "Suprim Pvt", "Infosys", "Wipro", "HCL Technologies",
-  "Tech Mahindra", "Cognizant", "Capgemini", "L&T Infotech",
-  "Persistent Systems", "Mphasis",
-];
-const PLACEHOLDER_HOSTS = [
-  "Pratik Kale", "Tushar Patil", "Raj Shinde", "Jignesh Roy", "Pratik Kale",
-  "Pratik Kale", "Sanjay Mehta", "Vikram Nair", "Anita Kulkarni",
-  "Suresh Yadav", "Ravi Sharma", "Pooja Desai", "Anil Joshi",
-  "Kavita More", "Rahul Singh",
-];
-const PLACEHOLDER_DEPTS = [
-  "IT Department", "Sales Department", "IT Department", "IT Department",
-  "IT Department", "IT Department", "HR Department", "Finance Department",
-  "IT Department", "Operations", "Marketing", "IT Department",
-  "Admin Department", "Sales Department", "IT Department",
-];
-
-const ALL_ROWS = Array.from({ length: ROWS }).map((_, idx) => ({
-  id:      PLACEHOLDER_IDS[idx],
-  name:    PLACEHOLDER_NAMES[idx],
-  company: PLACEHOLDER_COMPANIES[idx],
-  host:    PLACEHOLDER_HOSTS[idx],
-  dept:    PLACEHOLDER_DEPTS[idx],
-}));
-
-const GuestTable = ({ selectedId, onSelect, search = "" }) => {
+const GuestTable = ({
+  selectedId,
+  onSelect,
+  search = "",
+  guests = [],
+  loading,
+  error,
+}) => {
   const { t } = useTranslation();
 
-  const filtered = ALL_ROWS.filter((row) =>
-    String(row.id).startsWith(search)
+  // Filter by guest name using search
+  const filtered = guests.filter((row) =>
+    row.guestDetails?.name?.toLowerCase().includes(search.toLowerCase()),
   );
 
   return (
@@ -59,27 +28,43 @@ const GuestTable = ({ selectedId, onSelect, search = "" }) => {
           <span className="guest-th">{t("guest.hostDetails")}</span>
         </div>
 
-        {/* ── Rows ── */}
-        {filtered.length === 0 ? (
+        {/* ── States ── */}
+        {loading ? (
+          <div className="guest-table-empty">Loading...</div>
+        ) : error ? (
+          <div className="guest-table-empty" style={{ color: "#EA4D4E" }}>
+            {error}
+          </div>
+        ) : filtered.length === 0 ? (
           <div className="guest-table-empty">{t("guest.noGuestsFound")}</div>
         ) : (
           filtered.map((row, idx) => (
             <div
-              key={row.id}
-              className={`guest-table-row ${selectedId === row.id ? "guest-table-row--selected" : ""}`}
-              onClick={() => onSelect(selectedId === row.id ? null : row.id)}
+              key={row.requestId}
+              className={`guest-table-row ${selectedId === row.requestId ? "guest-table-row--selected" : ""}`}
+              onClick={() =>
+                onSelect(selectedId === row.requestId ? null : row.requestId)
+              }
             >
               <span className="guest-td-num">
                 {String(idx + 1).padStart(2, "0")}.
               </span>
-              <span className="guest-td-primary">{row.id}</span>
+              <span className="guest-td-primary">{row.requestId}</span>
               <div className="guest-td-col">
-                <span className="guest-td-primary">{row.name}</span>
-                <span className="guest-td-secondary">{row.company}</span>
+                <span className="guest-td-primary">
+                  {row.guestDetails?.name}
+                </span>
+                <span className="guest-td-secondary">
+                  {row.guestDetails?.company}
+                </span>
               </div>
               <div className="guest-td-col">
-                <span className="guest-td-primary">{row.host}</span>
-                <span className="guest-td-secondary">{row.dept}</span>
+                <span className="guest-td-primary">
+                  {row.hostDetails?.empName}
+                </span>
+                <span className="guest-td-secondary">
+                  {row.hostDetails?.deptName}
+                </span>
               </div>
             </div>
           ))

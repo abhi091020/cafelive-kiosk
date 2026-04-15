@@ -9,42 +9,36 @@ import {
 import NumPad from "@components/employee-booking/NumPad";
 import { useUser } from "@context/UserContext";
 import { ROUTES } from "@router/AppRouter";
+import { validateUser } from "@services/api/userAPI";
 
 const EmployeeBookingPage = () => {
   const [employeeId, setEmployeeId] = useState("");
-  const { setUser } = useUser();
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const { user, setUser } = useUser(); // ✅ also destructure `user`
   const navigate = useNavigate();
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!employeeId) return;
 
-    // ── Mock employee lookup until backend is ready ──
-    const mockEmployees = {
-      1001: {
-        name: "Rahul Sharma",
-        department: "Engineering",
-        shift: "Morning",
-      },
-      1002: { name: "Priya Patel", department: "HR", shift: "Evening" },
-      1003: { name: "Amit Kumar", department: "Finance", shift: "Morning" },
-    };
+    setLoading(true);
+    setError(null);
 
-    const mock = mockEmployees[employeeId] ?? {
-      name: "Employee " + employeeId, // ← fallback if ID not in mock list
-      department: "General",
-      shift: "Morning",
-    };
+    // ✅ Capture staffId BEFORE setUser() overwrites the session
+    const staffId = user?.userType === "staff" ? Number(user.id) : null;
 
-    setUser({
-      id: employeeId,
-      employeeId: employeeId,
-      name: mock.name,
-      department: mock.department,
-      shift: mock.shift,
-      canBookGuest: false,
-    });
+    try {
+      const result = await validateUser(employeeId);
 
-    navigate(ROUTES.MENU);
+      setUser(result);
+
+      // ✅ Pass staffId to MenuPage via route state
+      navigate(ROUTES.MENU, { state: { staffId } });
+    } catch (err) {
+      setError(err.serverMessage ?? "User not found. Please try again.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -78,6 +72,24 @@ const EmployeeBookingPage = () => {
         <EmployeeIdCard value={employeeId} />
       </div>
 
+      {/* ── ERROR MESSAGE ── */}
+      {error && (
+        <div
+          style={{
+            position: "absolute",
+            top: "30vh",
+            left: "50%",
+            transform: "translateX(-50%)",
+            zIndex: 6,
+            color: "#EA4D4E",
+            fontWeight: 600,
+            fontSize: "clamp(0.9rem, 1.4vw, 1.1rem)",
+          }}
+        >
+          {error}
+        </div>
+      )}
+
       {/* ── SUBMIT + CANCEL BUTTONS ── */}
       <div
         style={{
@@ -88,7 +100,7 @@ const EmployeeBookingPage = () => {
           zIndex: 5,
         }}
       >
-        <EmployeeBookingActions onSubmit={handleSubmit} />
+        <EmployeeBookingActions onSubmit={handleSubmit} loading={loading} />
       </div>
 
       {/* ── NUMPAD ── */}
