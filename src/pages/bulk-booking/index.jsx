@@ -10,13 +10,17 @@ import {
   ConfirmDialog,
   BackButton,
 } from "@common";
-import { BookOrderCard } from "@components/menu";
-import { BulkOrderItem, BulkOrderActions } from "@components/bulk-booking";
+import {
+  BulkOrderCard,
+  BulkOrderItem,
+  BulkOrderActions,
+} from "@components/bulk-booking";
 import { useUser } from "@context/UserContext";
 import { useTranslation } from "react-i18next";
 import usePrint from "@hooks/usePrint";
-import { createAndPrintBulkTicket } from "@services/print/printService"; // ✅ FIXED: was createAndPrintTicket
+import { createAndPrintBulkTicket } from "@services/print/printService";
 import { bookBulkOrder } from "@services/api/orderAPI";
+import { getShifts, getDayWiseFoodAllocation } from "@services/api/menuAPI";
 
 // ─── Animations ───────────────────────────────────────────────────────────────
 
@@ -33,103 +37,6 @@ const bounceStyle = `
     80%       { transform: translateX(5px); }
   }
 `;
-
-// ─── Shift Alert Dialog ───────────────────────────────────────────────────────
-
-const ShiftAlertDialog = ({ visible, onClose }) => {
-  const { t } = useTranslation();
-  if (!visible) return null;
-  return (
-    <div
-      style={{
-        position: "fixed",
-        inset: 0,
-        background: "rgba(0,0,0,0.45)",
-        zIndex: 100,
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-      }}
-      onClick={onClose}
-    >
-      <div
-        onClick={(e) => e.stopPropagation()}
-        style={{
-          background: "#fff",
-          borderRadius: "16px",
-          padding: "40px 48px",
-          boxShadow: "0 8px 40px rgba(0,0,0,0.18)",
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          gap: "16px",
-          minWidth: "380px",
-          animation: "shakeX 0.4s ease",
-        }}
-      >
-        <div
-          style={{
-            width: "64px",
-            height: "64px",
-            borderRadius: "50%",
-            background: "#FEF2F2",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-          }}
-        >
-          <svg width="32" height="32" viewBox="0 0 24 24" fill="none">
-            <path
-              d="M12 9v4M12 17h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"
-              stroke="#B91C1C"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          </svg>
-        </div>
-        <p
-          style={{
-            margin: 0,
-            fontSize: "1.3rem",
-            fontWeight: 700,
-            color: "#050404",
-            textAlign: "center",
-          }}
-        >
-          {t("shift.pleaseSelectShift")}
-        </p>
-        <p
-          style={{
-            margin: 0,
-            fontSize: "1rem",
-            color: "#6B7280",
-            textAlign: "center",
-          }}
-        >
-          {t("shift.mustSelectShift")}
-        </p>
-        <button
-          onClick={onClose}
-          style={{
-            marginTop: "8px",
-            padding: "12px 40px",
-            background: "linear-gradient(90deg, #EA4D4E 0%, #B91C1C 100%)",
-            color: "#fff",
-            border: "none",
-            borderRadius: "10px",
-            fontSize: "1.05rem",
-            fontWeight: 700,
-            cursor: "pointer",
-            boxShadow: "0 4px 14px rgba(234,77,78,0.35)",
-          }}
-        >
-          {t("shift.okGotIt")}
-        </button>
-      </div>
-    </div>
-  );
-};
 
 // ─── Booking Error Dialog ─────────────────────────────────────────────────────
 
@@ -242,11 +149,59 @@ const BulkBookingPage = () => {
   const [shift, setShift] = useState(null);
   const [selectedItems, setSelectedItems] = useState([]);
   const [showDialog, setShowDialog] = useState(false);
-  const [showShiftAlert, setShowShiftAlert] = useState(false);
   const [canScrollDown, setCanScrollDown] = useState(false);
   const [scrollRatio, setScrollRatio] = useState(0);
   const [isBooking, setIsBooking] = useState(false);
   const [bookingError, setBookingError] = useState(null);
+
+  // API state
+  const [shifts, setShifts] = useState([]);
+  const [loadingShifts, setLoadingShifts] = useState(false);
+  const [menuData, setMenuData] = useState({ mealTypes: [] });
+  const [loadingMenu, setLoadingMenu] = useState(false);
+
+  // ✅ Fetch shifts on mount and auto-select the first one
+  useEffect(() => {
+    const fetchShifts = async () => {
+      setLoadingShifts(true);
+      try {
+        const data = await getShifts();
+        const list = Array.isArray(data) ? data : [];
+        setShifts(list);
+        // Auto-select first shift — no manual selection needed
+        if (list.length > 0) {
+          setShift(list[0]);
+        }
+      } catch (err) {
+        console.error("[BulkBooking] getShifts failed:", err);
+        setShifts([]);
+      } finally {
+        setLoadingShifts(false);
+      }
+    };
+    fetchShifts();
+  }, []);
+
+  // Fetch menu whenever selected shift changes
+  useEffect(() => {
+    if (!shift?.shiftId) {
+      setMenuData({ mealTypes: [] });
+      return;
+    }
+    const fetchMenu = async () => {
+      setLoadingMenu(true);
+      try {
+        const data = await getDayWiseFoodAllocation(shift.shiftId);
+        setMenuData(data ?? { mealTypes: [] });
+      } catch (err) {
+        console.error("[BulkBooking] getDayWiseFoodAllocation failed:", err);
+        setMenuData({ mealTypes: [] });
+      } finally {
+        setLoadingMenu(false);
+      }
+    };
+    fetchMenu();
+  }, [shift?.shiftId]);
 
   // ── Scroll indicator ────────────────────────────────────────────────────────
   const updateScroll = () => {
@@ -293,10 +248,6 @@ const BulkBookingPage = () => {
 
   const handleBookMeal = () => {
     if (!isEnabled) return;
-    if (!shift) {
-      setShowShiftAlert(true);
-      return;
-    }
     setShowDialog(true);
   };
 
@@ -325,7 +276,6 @@ const BulkBookingPage = () => {
 
       bookingResult = response.result;
 
-      // ✅ FIXED: now calls createAndPrintBulkTicket with contractorName
       await createAndPrintBulkTicket({
         contractorName: user.name ?? user.contractorName ?? "Contractor",
         items: selectedItems,
@@ -383,11 +333,15 @@ const BulkBookingPage = () => {
       <UserWelcome />
       <DateTimeDisplay />
 
-      <BookOrderCard
-        selectedItemIds={selectedItemIds}
-        onItemToggle={handleItemToggle}
+      <BulkOrderCard
+        shifts={shifts}
+        loadingShifts={loadingShifts}
         shift={shift}
         onShiftChange={handleShiftChange}
+        menuData={menuData}
+        loadingMenu={loadingMenu}
+        selectedItemIds={selectedItemIds}
+        onItemToggle={handleItemToggle}
       />
 
       {/* ── Selected items + Book button ──────────────────────────────────── */}
@@ -558,11 +512,6 @@ const BulkBookingPage = () => {
         onNo={handleDialogNo}
       />
 
-      <ShiftAlertDialog
-        visible={showShiftAlert}
-        onClose={() => setShowShiftAlert(false)}
-      />
-
       <BookingErrorDialog
         message={bookingError}
         onClose={() => setBookingError(null)}
@@ -570,4 +519,5 @@ const BulkBookingPage = () => {
     </div>
   );
 };
+
 export default BulkBookingPage;

@@ -4,7 +4,7 @@
 // Print width  : 72mm usable
 // Resolution   : 203 DPI
 // Color        : Monochrome only (no grays, no gradients)
-// QR size      : 52mm × 52mm  (industry scan-safe minimum for thermal)
+// QR size      : 30mm × 30mm (all ticket types)
 
 import QRCode from "qrcode";
 
@@ -53,7 +53,7 @@ const getCouponType = (itemName = "") => {
   return "MEAL COUPON";
 };
 
-// ─── Shared thermal CSS ───────────────────────────────────────────────────────
+// ─── Shared thermal CSS (all ticket types: employee, guest, bulk) ─────────────
 const thermalCSS = `
   @page { size: 72mm auto; margin: 0; }
   * {
@@ -62,48 +62,48 @@ const thermalCSS = `
   }
   body {
     font-family: 'Courier New', Courier, monospace;
-    width: 72mm; padding: 3mm 3mm;
+    width: 72mm; padding: 1.5mm 1.5mm;
     background: #ffffff; color: #000000;
-    font-size: 8pt; line-height: 1.3;
+    font-size: 7pt; line-height: 1.2;
   }
-  .header { text-align: center; margin-bottom: 2mm; }
+  .header { text-align: center; margin-bottom: 1mm; }
   .header .coupon-type {
     font-size: 7pt; font-weight: bold;
     letter-spacing: 0.05em; text-transform: uppercase;
     border: 1px solid #000; display: inline-block;
-    padding: 0.5mm 3mm; margin-bottom: 1.5mm;
+    padding: 0.2mm 1.5mm; margin-bottom: 0.75mm;
   }
-  .header .company { font-size: 13pt; font-weight: bold; line-height: 1.2; }
-  .divider       { border: none; border-top: 1px dashed #000; margin: 2mm 0; }
-  .divider-solid { border: none; border-top: 1px solid #000;  margin: 2mm 0; }
+  .header .company { font-size: 10pt; font-weight: bold; line-height: 1.2; }
+  .divider       { border: none; border-top: 1px dashed #000; margin: 1mm 0; }
+  .divider-solid { border: none; border-top: 1px solid #000;  margin: 1mm 0; }
   .meta-row {
     display: flex; justify-content: space-between;
-    align-items: flex-start; margin-bottom: 1mm;
+    align-items: flex-start; margin-bottom: 0.6mm;
   }
   .meta-left .label    { font-size: 7pt; font-weight: bold; text-transform: uppercase; letter-spacing: 0.04em; }
-  .meta-left .value    { font-size: 9pt; font-weight: normal; margin-top: 0.5mm; }
+  .meta-left .value    { font-size: 7pt; font-weight: bold; margin-top: 0.2mm; }
   .meta-right          { text-align: right; }
-  .meta-right .date    { font-size: 7.5pt; font-weight: bold; }
-  .meta-right .time    { font-size: 7.5pt; font-weight: bold; margin-top: 0.5mm; }
+  .meta-right .date    { font-size: 7pt; font-weight: bold; }
+  .meta-right .time    { font-size: 7pt; font-weight: bold; margin-top: 0.2mm; }
   .item-name {
-    text-align: center; font-size: 11pt; font-weight: bold;
-    letter-spacing: 0.03em; margin: 2mm 0;
+    text-align: center; font-size: 9pt; font-weight: bold;
+    letter-spacing: 0.03em; margin: 1mm 0;
   }
-  .qr-wrapper { display: flex; justify-content: center; align-items: center; margin: 2mm 0; }
-  .qr-frame   { display: inline-block; padding: 2mm; border: 1.5px solid #000; border-radius: 4mm; }
-  .qr-frame img { display: block; width: 52mm; height: 52mm; }
+  .qr-wrapper { display: flex; justify-content: center; align-items: center; margin: 1mm 0; }
+  .qr-frame   { display: inline-block; padding: 1mm; border: 1.5px solid #000; border-radius: 2mm; }
+  .qr-frame img { display: block; width: 30mm; height: 30mm; }
   .valid-upto {
-    text-align: center; font-size: 7.5pt; font-weight: bold;
-    margin-top: 2mm; letter-spacing: 0.03em;
+    text-align: center; font-size: 7pt; font-weight: bold;
+    margin-top: 1mm; letter-spacing: 0.03em;
   }
-  .tear-space { margin-top: 5mm; text-align: center; font-size: 6pt; letter-spacing: 0.2em; }
+  .tear-space { margin-top: 2mm; text-align: center; font-size: 7pt; letter-spacing: 0.2em; }
   @media print { body { width: 72mm; } }
 `;
 
 // ─── QR generator ────────────────────────────────────────────────────────────
-const generateQR = (data) =>
+const generateQR = (data, size = 240) =>
   QRCode.toDataURL(data, {
-    width: 400,
+    width: size,
     margin: 2,
     errorCorrectionLevel: "M",
     color: { dark: "#000000", light: "#ffffff" },
@@ -195,8 +195,7 @@ export const buildGuestTicketHtml = async ({
   <div class="meta-row">
     <div class="meta-left">
       <div class="label">Guest Name:</div>
-      <div class="value">${guestDetails?.name ?? "—"}</div>
-      <div class="value" style="font-size:7pt;">${guestDetails?.company ?? guestDetails?.organization ?? ""}</div>
+      <div class="value">${guestDetails?.name ?? "—"}${(guestDetails?.company ?? guestDetails?.organization) ? ` / ${guestDetails.company ?? guestDetails.organization}` : ""}</div>
     </div>
     <div class="meta-right">
       <div class="date">${dateStr}</div>

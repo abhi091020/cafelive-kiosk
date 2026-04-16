@@ -7,16 +7,8 @@ import { useApp } from "@context/AppContext";
 //
 // Handles ticket printing silently.
 //
-// Production (Electron)     → window.electronAPI.print()  (silent, no dialog)
-// Kiosk (Chrome + flag)     → hidden <iframe> + print()   (silent with --kiosk-printing)
-// Dev (plain browser)       → hidden <iframe> + print()   (shows dialog — expected)
-//
-// Kiosk launch flag required in .bat:
-//   --kiosk-printing
-//
-// Usage:
-//   const { print, isPrinting } = usePrint();
-//   await print({ html: ticketHtmlString });
+// Production (Electron)  → window.electronAPI.silentPrint()  (hidden BrowserWindow, no dialog)
+// Dev (plain browser)    → hidden <iframe> + print()         (shows dialog — expected)
 //
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -43,15 +35,21 @@ const usePrint = () => {
         setIsPrinting(true);
 
         try {
-          const isElectron = Boolean(window?.electronAPI?.print);
+          // ── Production: Electron silent print via hidden BrowserWindow ──────
+          // Uses ipcMain handler "silent-print" in electron/main.js which
+          // loads the ticket HTML into an invisible window and prints only that.
+          const isElectron = Boolean(window?.electronAPI?.silentPrint);
 
           if (isElectron) {
-            // ── Production: Electron silent print ──────────────────────────
             window.electronAPI
-              .print({ html })
+              .silentPrint({
+                html,
+                pageSize: "A4", // change to thermal size if needed e.g. { width: 72, height: 200 }
+                copies: 1,
+              })
               .then(resolve)
               .catch((err) => {
-                console.error("[usePrint] Electron print failed:", err);
+                console.error("[usePrint] Electron silent print failed:", err);
                 showNotification({ message: "printerError", type: "error" });
                 resolve();
               })
@@ -60,9 +58,10 @@ const usePrint = () => {
             return;
           }
 
-          // ── Chrome Kiosk / Dev: hidden iframe silent print ────────────────
-          // No popup — iframe is injected invisibly into the current page.
-          // With --kiosk-printing flag, Chrome skips the dialog entirely.
+          // ── Dev / Browser fallback: hidden iframe print ───────────────────
+          // Shows the browser print dialog in dev — that's expected behaviour.
+          console.log("[usePrint] Browser fallback — using hidden iframe");
+
           const iframe = document.createElement("iframe");
 
           Object.assign(iframe.style, {
@@ -85,7 +84,7 @@ const usePrint = () => {
               console.error("[usePrint] iframe print failed:", err);
               showNotification({ message: "printerError", type: "error" });
             } finally {
-              // Small delay so print job is queued before iframe is removed
+              // Small delay so the print job is queued before iframe is removed
               setTimeout(() => {
                 document.body.removeChild(iframe);
                 setIsPrinting(false);
@@ -94,7 +93,6 @@ const usePrint = () => {
             }
           };
 
-          // Write ticket HTML into the hidden iframe
           iframe.contentDocument.open();
           iframe.contentDocument.write(html);
           iframe.contentDocument.close();

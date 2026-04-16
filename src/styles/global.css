@@ -14,51 +14,56 @@
 
 /* ── Root ─────────────────────────────────────────────────────────────────── */
 html {
+  width: 100%; /* ✅ FIX: was missing, causes white sides */
   height: 100%;
   font-size: 16px;
-  -webkit-text-size-adjust: 100%; /* prevent font scaling on orientation change */
+  background-color: #0f0f0f; /* ✅ FIX: hardcoded before CSS vars load */
+  -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
 }
 
 body {
+  width: 100%; /* ✅ FIX: explicit width */
   height: 100%;
   font-family: var(--font-family);
   font-size: var(--font-md);
-  background-color: var(--color-bg-primary);
+  background-color: #0f0f0f; /* ✅ FIX: hardcoded, not var() — loads instantly */
   color: var(--color-text-primary);
   line-height: 1.5;
-  overflow: hidden; /* kiosk — no body scroll ever */
+  overflow: hidden;
 
   /* ── Touch optimizations ────────────────────────────────────────────── */
-  -webkit-tap-highlight-color: transparent; /* remove grey flash on tap */
-  touch-action: manipulation; /* disable double-tap zoom */
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
 /* ── Root mount point ─────────────────────────────────────────────────────── */
 #root {
-  height: 100%;
-  width: 100%;
+  width: 100vw; /* ✅ FIX: use vw/vh not % — absolute viewport units */
+  height: 100vh;
+  min-width: 100vw; /* ✅ FIX: prevent any shrinking */
+  min-height: 100vh;
   display: flex;
   flex-direction: column;
+  background-color: #0f0f0f; /* ✅ FIX: belt-and-suspenders */
+  overflow: hidden;
 }
 
 /* ── No text selection on kiosk ───────────────────────────────────────────── */
-/* Users should never be able to select/highlight text on a kiosk             */
 * {
   -webkit-user-select: none;
   user-select: none;
 }
 
-/* Allow selection only inside inputs (for NumPad value display) */
 input,
 textarea {
   -webkit-user-select: text;
   user-select: text;
 }
 
-/* ── No outline on touch — use active states instead ─────────────────────── */
+/* ── No outline on touch ──────────────────────────────────────────────────── */
 *:focus {
   outline: none;
 }
@@ -97,8 +102,7 @@ a {
   text-decoration: none;
 }
 
-/* ── Scrollbar — hidden by default, thin when needed ─────────────────────── */
-/* Kiosk screens should not show scrollbars — content must fit the screen     */
+/* ── Scrollbar ────────────────────────────────────────────────────────────── */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
@@ -119,7 +123,6 @@ a {
 
 /* ── Utility classes ──────────────────────────────────────────────────────── */
 
-/* Full screen container — used by every screen */
 .screen {
   width: 100vw;
   height: 100vh;
@@ -129,7 +132,6 @@ a {
   background: var(--color-bg-primary);
 }
 
-/* Content area between header and footer */
 .screen-content {
   flex: 1;
   overflow-y: auto;
@@ -137,7 +139,6 @@ a {
   padding: var(--screen-padding);
 }
 
-/* Centered layout — used on Splash, OrderSuccess, FeedbackSuccess */
 .screen-center {
   width: 100vw;
   height: 100vh;
@@ -149,7 +150,6 @@ a {
   background: var(--color-bg-primary);
 }
 
-/* Overlay backdrop — used by Modal and Loader */
 .overlay {
   position: fixed;
   inset: 0;
@@ -245,7 +245,6 @@ a {
   }
 }
 
-/* Animation utility classes */
 .animate-fadeIn {
   animation: fadeIn var(--transition-base) ease forwards;
 }

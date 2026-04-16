@@ -1,9 +1,11 @@
-/*src\index.css  */
+/* src/index.css */
 
+/* ── Imports MUST come first ── */
 @import "./styles/variables.css";
 @import "./styles/global.css";
 @import "./styles/animations.css";
 
+/* ── Tailwind comes AFTER imports ── */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;

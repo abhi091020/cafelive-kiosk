@@ -16,10 +16,11 @@ export default defineConfig(({ mode }) => {
   // Load all env vars from the appropriate .env file (development / staging / production)
   const env = loadEnv(mode, process.cwd(), "");
 
-  const BACKEND_URL = env.VITE_BACKEND_URL || "http://192.168.10.197:8000";
+  const BACKEND_URL = env.VITE_BACKEND_URL || "http://192.168.10.168:8000";
 
   return {
     plugins: [react()],
+    base: "./",
 
     resolve: {
       alias: {
@@ -71,6 +72,7 @@ export default defineConfig(({ mode }) => {
 
     // ── Build Optimizations ─────────────────────────────────────────────────
     build: {
+      base: "./",
       outDir: "dist",
       sourcemap: false,
       minify: "terser",

@@ -26,11 +26,6 @@ const LoginPage = () => {
   const [scanEnabled, setScanEnabled] = useState(false);
 
   // ── Always wipe session when Login mounts ─────────────────────────────────
-  // This guarantees a clean state whether the user:
-  //   • arrived via idle timeout
-  //   • pressed BackButton from Home / StaffHome
-  //   • navigated here any other way
-  // This is the correct kiosk pattern — no race condition possible.
   useEffect(() => {
     clearUser();
     clearOrder();
@@ -43,13 +38,8 @@ const LoginPage = () => {
 
     try {
       const result = await validateUser(empId);
-
       setUser(result);
 
-      // ── Routing logic ─────────────────────────────────────────
-      // Staff      → canteenStaffId present      → /staff-home
-      // Contractor → employmentType OnContract   → /staff-home
-      // Employee   → employmentType OnRoll       → /home
       const isStaff = !!result.canteenStaffId;
       const isContractor = result.employmentType === "OnContract";
 
@@ -66,14 +56,12 @@ const LoginPage = () => {
     }
   };
 
-  // ── Face device input — only active after button click ──
   useScanner({
     onScan: (empId) => handleFaceScan(empId),
     minLength: 1,
     disabled: !scanEnabled,
   });
 
-  // ── Button click → only enables scanner, nothing else ──
   const handleScan = () => {
     setScanEnabled(true);
   };
@@ -81,20 +69,23 @@ const LoginPage = () => {
   return (
     <div
       style={{
-        width: "100vw",
-        height: "100vh",
+        position: "fixed",
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
         overflow: "hidden",
-        position: "relative",
+        backgroundColor: "#0f0f0f", // fallback matches your CSS variable
       }}
     >
-      {/* ── BASE IMAGE ── */}
+      {/* ── BASE IMAGE (stretched to fill exactly) ── */}
       <img
         src={finalBg}
         alt="Login Background"
         style={{
           width: "100%",
           height: "100%",
-          objectFit: "cover",
+          objectFit: "fill", // 👈 forces stretch, no white bars
           display: "block",
         }}
       />

@@ -1,0 +1,6 @@
+{
+  "name": "cafelive-kiosk",
+  "version": "1.0.0",
+  "main": "main.js",
+  "env": "production"
+}
