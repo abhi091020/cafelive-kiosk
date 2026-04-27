@@ -94,7 +94,7 @@ const MyOrderSection = ({
             {/* ✅ Language-aware name */}
             <span
               style={{
-                fontSize: "1.25rem",
+                fontSize: "1.6rem",
                 color: "#050404",
                 fontWeight: 500,
                 flex: 1,

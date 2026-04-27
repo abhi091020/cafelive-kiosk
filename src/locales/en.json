@@ -78,7 +78,7 @@
     "okGotIt": "OK, Got it"
   },
   "guest": {
-    "srNo": "Sr. No.",  
+    "srNo": "Sr. No.",
     "guestMeal": "Guest Meal Booking",
     "searchGuestName": "Search Guest Name",
     "searchPlaceholder": "Type guest name...",
@@ -110,8 +110,8 @@
     "speedOfService": "Speed of Service",
     "qualityOfFacilities": "Facilities",
     "submitFeedback": "Submit Feedback",
-    "feedbackSuccess": "Thank You!",
-    "feedbackSuccessMessage": "Your feedback has been recorded.",
+    "feedbackSuccess": "Thank you!",
+    "feedbackSuccessMessage": "Your feedback has been submitted successfully.",
     "rateYourMeal": "Rate Your Meal",
     "rateCanteen": "Rate the Canteen",
     "selectRating": "Please rate all criteria"

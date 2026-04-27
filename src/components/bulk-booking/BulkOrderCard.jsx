@@ -2,37 +2,33 @@
 
 import { useState, useRef } from "react";
 import { useTranslation } from "react-i18next";
-
-// ─── Category images (fallbacks for known meal types by index) ────────────────
-import MealImg from "@assets/meal/meal.png";
-import SnacksImg from "@assets/meal/snacks.png";
-import TeaCoffeeImg from "@assets/meal/teacoffee.png";
-import BoxImg from "@assets/meal/box.png"; // generic fallback
-
-const CATEGORY_IMAGES = [MealImg, SnacksImg, TeaCoffeeImg];
-
-const getCategoryImage = (index) => CATEGORY_IMAGES[index] ?? BoxImg;
+import BoxImg from "@assets/meal/box.png"; // fallback only
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-/**
- * Build a display name for a menu entry.
- * The API returns items[] inside each menu; we join their names as a description
- * and use the first item's name (or a fallback) as the title.
- */
 const buildMenuDisplay = (menu, lang = "en") => {
+  const menuName =
+    lang === "hi"
+      ? menu.menuHindiName || menu.menuEnglishName
+      : lang === "mr"
+        ? menu.menuMarathiName || menu.menuEnglishName
+        : (menu.menuEnglishName ?? `Menu ${menu.menuId}`);
+
   const items = menu.items ?? [];
 
-  const getName = (item) => {
+  const getItemName = (item) => {
     if (lang === "hi" && item.itemHindiName) return item.itemHindiName;
     if (lang === "mr" && item.itemMarathiName) return item.itemMarathiName;
-    return item.itemEnglishName ?? `Menu ${menu.menuId}`;
+    return item.itemEnglishName ?? "";
   };
 
-  const names = items.map(getName);
+  // Deduplicate item names
+  const uniqueNames = [...new Set(items.map(getItemName))];
+
   return {
-    name: names[0] ?? `Menu ${menu.menuId}`,
-    desc: names.slice(1).join(", "),
+    name: menuName,
+    desc: uniqueNames.join(", "),
+    image: menu.menuImage ?? null,
   };
 };
 
@@ -72,60 +68,21 @@ const shimmerCss = `
   }
 `;
 
-// ─── Empty State ──────────────────────────────────────────────────────────────
-
-const EmptyMenuState = ({ shift, t }) => (
-  <div
-    style={{
-      flex: 1,
-      display: "flex",
-      flexDirection: "column",
-      alignItems: "center",
-      justifyContent: "center",
-      gap: "12px",
-      padding: "32px",
-      color: "#9CA3AF",
-    }}
-  >
-    <svg width="48" height="48" viewBox="0 0 24 24" fill="none">
-      <path
-        d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2 5h12M9 21a1 1 0 100-2 1 1 0 000 2zm10 0a1 1 0 100-2 1 1 0 000 2z"
-        stroke="#D1D5DB"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-    <p
-      style={{
-        margin: 0,
-        fontSize: "1.1rem",
-        fontWeight: 600,
-        color: "#6B7280",
-        textAlign: "center",
-      }}
-    >
-      {shift
-        ? (t("menu.noItemsForShift") ?? "No items available for this shift")
-        : (t("menu.selectShiftFirst") ?? "Select a shift to view menu")}
-    </p>
-  </div>
-);
-
 // ─── BulkOrderCard ────────────────────────────────────────────────────────────
 
 const BulkOrderCard = ({
   shifts = [],
   loadingShifts = false,
-  shift = null, // { shiftId, shiftName }
+  shift = null,
   onShiftChange,
   menuData = { mealTypes: [] },
   loadingMenu = false,
+  menuErrorMsg = null,
   selectedItemIds = new Set(),
   onItemToggle,
 }) => {
   const { t, i18n } = useTranslation();
-  const lang = i18n.language?.slice(0, 2) ?? "en"; // "en" | "hi" | "mr"
+  const lang = i18n.language?.slice(0, 2) ?? "en";
 
   const [shiftOpen, setShiftOpen] = useState(false);
   const [activeCatIdx, setActiveCatIdx] = useState(0);
@@ -133,8 +90,6 @@ const BulkOrderCard = ({
 
   const mealTypes = menuData?.mealTypes ?? [];
 
-  // Reset active category index when menu data changes (new shift selected)
-  // (we don't use useEffect here to keep it simple — just clamp the index)
   const safeCatIdx =
     mealTypes.length > 0 ? Math.min(activeCatIdx, mealTypes.length - 1) : 0;
 
@@ -145,9 +100,12 @@ const BulkOrderCard = ({
     if (rightPanelRef.current) rightPanelRef.current.scrollTop = 0;
   };
 
-  // ── Category label: use mealTypeName if API provides it, else fallback ──────
-  const getCategoryLabel = (mealType, idx) =>
-    mealType.mealTypeName ?? mealType.name ?? `Category ${idx + 1}`;
+  const getCategoryLabel = (mealType) => {
+    if (lang === "hi" && mealType.mealHindiName) return mealType.mealHindiName;
+    if (lang === "mr" && mealType.mealMarathiName)
+      return mealType.mealMarathiName;
+    return mealType.mealEnglishName ?? "Category";
+  };
 
   return (
     <div
@@ -192,7 +150,7 @@ const BulkOrderCard = ({
           {t("menu.bookYourOrder")}
         </span>
 
-        {/* ── Shift Dropdown ──────────────────────────────────────────────── */}
+        {/* ── Shift Dropdown ─────────────────────────────────────────────── */}
         <div style={{ position: "relative" }}>
           <button
             onClick={() => !loadingShifts && setShiftOpen((p) => !p)}
@@ -241,7 +199,7 @@ const BulkOrderCard = ({
                 <button
                   key={s.shiftId}
                   onClick={() => {
-                    onShiftChange?.(s); // pass full { shiftId, shiftName } object
+                    onShiftChange?.(s);
                     setShiftOpen(false);
                     setActiveCatIdx(0);
                   }}
@@ -260,7 +218,6 @@ const BulkOrderCard = ({
                     whiteSpace: "nowrap",
                   }}
                 >
-                  {/* Support both shiftName and name field from API */}
                   {s.shiftName ?? s.name ?? `Shift ${s.shiftId}`}
                 </button>
               ))}
@@ -291,88 +248,19 @@ const BulkOrderCard = ({
 
       {/* ══ BODY ════════════════════════════════════════════════════════════ */}
       <div style={{ display: "flex", alignItems: "flex-start" }}>
-        {/* ── LEFT SIDEBAR — Categories (mealTypes) ────────────────────── */}
-        <div
-          style={{
-            width: "26.41%",
-            flexShrink: 0,
-            borderRight: "1px solid #F3F4F6",
-            display: "flex",
-            flexDirection: "column",
-          }}
-        >
-          {loadingMenu
-            ? /* skeleton categories */
-              [0, 1, 2].map((i) => (
-                <div
-                  key={i}
-                  style={{
-                    height: SIDEBAR_HEIGHT,
-                    display: "flex",
-                    flexDirection: "column",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    gap: "12px",
-                    padding: "16px",
-                    borderBottom: i < 2 ? "1px solid #F3F4F6" : "none",
-                  }}
-                >
-                  <Skeleton width="72px" height="72px" radius="50%" />
-                  <Skeleton width="80%" height="16px" />
-                </div>
-              ))
-            : mealTypes.length > 0
-              ? mealTypes.map((cat, idx, arr) => {
-                  const isActive = idx === safeCatIdx;
-                  return (
-                    <div
-                      key={cat.mealTypeId ?? idx}
-                      onClick={() => handleCategoryChange(idx)}
-                      style={{
-                        height: SIDEBAR_HEIGHT,
-                        flexShrink: 0,
-                        display: "flex",
-                        flexDirection: "column",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        padding: "16px 0",
-                        borderLeft: isActive
-                          ? "3px solid #B91C1C"
-                          : "3px solid transparent",
-                        background: isActive ? "#FFF0F0" : "transparent",
-                        borderBottom:
-                          idx < arr.length - 1 ? "1px solid #F3F4F6" : "none",
-                        cursor: "pointer",
-                        transition: "background 0.15s",
-                      }}
-                    >
-                      <img
-                        src={getCategoryImage(idx)}
-                        alt={getCategoryLabel(cat, idx)}
-                        style={{
-                          width: IMG_SIZE,
-                          height: IMG_SIZE,
-                          objectFit: "contain",
-                        }}
-                      />
-                      <p
-                        style={{
-                          fontSize: "clamp(1.2rem, 2vw, 1.7rem)",
-                          fontWeight: isActive ? 700 : 500,
-                          color: isActive ? "#B91C1C" : "#1F2937",
-                          margin: "8px 0 0 0",
-                          textAlign: "center",
-                          transition: "color 0.15s",
-                          paddingInline: "8px",
-                        }}
-                      >
-                        {getCategoryLabel(cat, idx)}
-                      </p>
-                    </div>
-                  );
-                })
-              : /* placeholder when no shift selected yet */
-                [0, 1, 2].map((i) => (
+        {/* ── SIDEBAR — uses cat.mealImage from API ─────────────────────── */}
+        {!menuErrorMsg && (
+          <div
+            style={{
+              width: "26.41%",
+              flexShrink: 0,
+              borderRight: "1px solid #F3F4F6",
+              display: "flex",
+              flexDirection: "column",
+            }}
+          >
+            {loadingMenu
+              ? [0, 1, 2].map((i) => (
                   <div
                     key={i}
                     style={{
@@ -381,25 +269,76 @@ const BulkOrderCard = ({
                       flexDirection: "column",
                       alignItems: "center",
                       justifyContent: "center",
+                      gap: "12px",
                       padding: "16px",
                       borderBottom: i < 2 ? "1px solid #F3F4F6" : "none",
-                      opacity: 0.35,
                     }}
                   >
-                    <img
-                      src={getCategoryImage(i)}
-                      alt=""
-                      style={{
-                        width: IMG_SIZE,
-                        height: IMG_SIZE,
-                        objectFit: "contain",
-                      }}
-                    />
+                    <Skeleton width="72px" height="72px" radius="50%" />
+                    <Skeleton width="80%" height="16px" />
                   </div>
-                ))}
-        </div>
+                ))
+              : mealTypes.length > 0
+                ? mealTypes.map((cat, idx, arr) => {
+                    const isActive = idx === safeCatIdx;
+                    // ✅ Use backend mealImage, fallback to BoxImg
+                    const catImage = cat.mealImage ?? BoxImg;
 
-        {/* ── RIGHT PANEL — Menus for active category ───────────────────── */}
+                    return (
+                      <div
+                        key={cat.mealTypeId ?? idx}
+                        onClick={() => handleCategoryChange(idx)}
+                        style={{
+                          height: SIDEBAR_HEIGHT,
+                          flexShrink: 0,
+                          display: "flex",
+                          flexDirection: "column",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          padding: "16px 0",
+                          borderLeft: isActive
+                            ? "3px solid #B91C1C"
+                            : "3px solid transparent",
+                          background: isActive ? "#FFF0F0" : "transparent",
+                          borderBottom:
+                            idx < arr.length - 1 ? "1px solid #F3F4F6" : "none",
+                          cursor: "pointer",
+                          transition: "background 0.15s",
+                        }}
+                      >
+                        <img
+                          src={catImage}
+                          alt={getCategoryLabel(cat)}
+                          onError={(e) => {
+                            e.currentTarget.src = BoxImg;
+                          }}
+                          style={{
+                            width: IMG_SIZE,
+                            height: IMG_SIZE,
+                            objectFit: "contain",
+                          }}
+                        />
+                        <p
+                          style={{
+                            fontSize: "clamp(1.2rem, 2vw, 1.7rem)",
+                            fontWeight: isActive ? 700 : 500,
+                            color: isActive ? "#B91C1C" : "#1F2937",
+                            margin: "8px 0 0 0",
+                            textAlign: "center",
+                            transition: "color 0.15s",
+                            paddingInline: "8px",
+                          }}
+                        >
+                          {getCategoryLabel(cat)}
+                        </p>
+                      </div>
+                    );
+                  })
+                : null}
+          </div>
+        )}
+
+        {/* ── RIGHT PANEL — uses menu.menuImage from API ────────────────── */}
         <div
           ref={rightPanelRef}
           className="bulk-right-scroll"
@@ -412,7 +351,6 @@ const BulkOrderCard = ({
           }}
         >
           {loadingMenu ? (
-            /* skeleton menu rows */
             [0, 1, 2].map((i) => (
               <div
                 key={i}
@@ -441,20 +379,23 @@ const BulkOrderCard = ({
             ))
           ) : activeMenus.length > 0 ? (
             activeMenus.map((menu, index) => {
-              // Each `menu` from the API = one bookable item (has menuId)
-              const { name, desc } = buildMenuDisplay(menu, lang);
+              const { name, desc, image } = buildMenuDisplay(menu, lang);
               const itemId = String(menu.menuId);
               const isSelected = selectedItemIds.has(itemId);
+
+              // ✅ Use backend menuImage, fallback to BoxImg
+              const menuImage = image ?? BoxImg;
 
               return (
                 <div key={menu.menuId}>
                   <div
                     onClick={() =>
                       onItemToggle?.({
-                        id: itemId, // used as React key & local state key
-                        menuId: menu.menuId, // sent to booking API
+                        id: itemId,
+                        menuId: menu.menuId,
                         name,
                         desc,
+                        image: menuImage,
                       })
                     }
                     style={{
@@ -472,13 +413,17 @@ const BulkOrderCard = ({
                     }}
                   >
                     <img
-                      src={getCategoryImage(safeCatIdx)}
+                      src={menuImage}
                       alt={name}
+                      onError={(e) => {
+                        e.currentTarget.src = BoxImg;
+                      }}
                       style={{
                         width: IMG_SIZE,
                         height: IMG_SIZE,
                         objectFit: "contain",
                         flexShrink: 0,
+                        borderRadius: "10px",
                       }}
                     />
                     <div style={{ flex: 1 }}>
@@ -546,7 +491,31 @@ const BulkOrderCard = ({
               );
             })
           ) : (
-            <EmptyMenuState shift={shift} t={t} />
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                width: "100%",
+                minHeight: `calc(${SIDEBAR_HEIGHT} * 3)`,
+              }}
+            >
+              <p
+                style={{
+                  margin: 0,
+                  fontSize: "1.2rem",
+                  fontWeight: 600,
+                  color: "#B91C1C",
+                  textAlign: "center",
+                  lineHeight: 1.6,
+                  padding: "0 32px",
+                }}
+              >
+                {menuErrorMsg ??
+                  t("menu.noItemsForShift") ??
+                  "No items available for this shift"}
+              </p>
+            </div>
           )}
         </div>
       </div>

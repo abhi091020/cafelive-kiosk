@@ -6,9 +6,11 @@ import { Header, Footer, BackButton } from "@components/common";
 import GuestSearchBar from "@components/guest/GuestSearchBar";
 import GuestTable from "@components/guest/GuestTable";
 import GuestActions from "@components/guest/GuestActions";
-import { getGuests, getGuestByRequestId } from "@services/api/guestAPI";
+import { getGuests, getGuestByRequestId } from "@services/api/guestAPI"; // ← confirmGuest removed
 import { createAndPrintGuestTicket } from "@services/print/printService";
+import { useUser } from "@context/UserContext";
 import usePrint from "@hooks/usePrint";
+import useScanner from "@hooks/useScanner";
 
 const GuestPage = () => {
   const [search, setSearch] = useState("");
@@ -22,8 +24,10 @@ const GuestPage = () => {
 
   const navigate = useNavigate();
   const { print, isPrinting } = usePrint();
+  const { user } = useUser();
 
-  // ── Load all guests on mount ───────────────────────────────────────────────
+  const backTo = user?.userType === "staff" ? "/staff-home" : "/home";
+
   useEffect(() => {
     async function fetchGuests() {
       try {
@@ -40,7 +44,6 @@ const GuestPage = () => {
     fetchGuests();
   }, []);
 
-  // ── Reset display list when search is cleared ──────────────────────────────
   useEffect(() => {
     if (!search.trim()) {
       setDisplayGuests(guests);
@@ -48,7 +51,37 @@ const GuestPage = () => {
     }
   }, [search, guests]);
 
-  // ── On submit: numeric → search by requestId, else filter by name ──────────
+  const lookupByRequestId = async (value) => {
+    try {
+      setSearchLoading(true);
+      setError(null);
+      const result = await getGuestByRequestId(value);
+      if (result.length) {
+        setDisplayGuests(result);
+      } else {
+        setDisplayGuests([]);
+        setError("No guest found for this Request ID.");
+      }
+    } catch {
+      setDisplayGuests([]);
+      setError("No guest found for this Request ID.");
+    } finally {
+      setSearchLoading(false);
+    }
+  };
+
+  useScanner({
+    onScan: async (scanned) => {
+      const value = scanned.trim();
+      if (!value) return;
+      setSearch(value);
+      setSelectedId(null);
+      setShowNumPad(false);
+      await lookupByRequestId(value);
+    },
+    minLength: 3,
+  });
+
   const handleSearchSubmit = async () => {
     setShowNumPad(false);
     const query = search.trim();
@@ -57,17 +90,7 @@ const GuestPage = () => {
     const isNumeric = /^\d+$/.test(query);
 
     if (isNumeric) {
-      try {
-        setSearchLoading(true);
-        setError(null);
-        const result = await getGuestByRequestId(query);
-        setDisplayGuests(result ? [result] : []);
-      } catch (err) {
-        setDisplayGuests([]);
-        setError("No guest found for this Request ID.");
-      } finally {
-        setSearchLoading(false);
-      }
+      await lookupByRequestId(query);
     } else {
       const lower = query.toLowerCase();
       const filtered = guests.filter((g) => {
@@ -75,10 +98,11 @@ const GuestPage = () => {
         return name.toLowerCase().includes(lower);
       });
       setDisplayGuests(filtered);
+      if (!filtered.length) setError("No guests found matching that name.");
     }
   };
 
-  // ── Print unique QR ticket → Redirect to /login ───────────────────────────
+  // ── Print: questQrCodes from getAll drives ticket count & QR values ──────────
   const handlePrint = async () => {
     const guest = displayGuests.find((g) => g.requestId === selectedId);
     if (!guest) return;
@@ -110,8 +134,7 @@ const GuestPage = () => {
       }}
     >
       <Header />
-
-      <BackButton to="/home" />
+      <BackButton to={backTo} />
 
       <GuestSearchBar
         value={search}
@@ -138,7 +161,7 @@ const GuestPage = () => {
       <GuestActions
         canPrint={!!selectedId && !isPrinting}
         onPrint={handlePrint}
-        onCancel={() => navigate(-1)}
+        onCancel={() => navigate(backTo, { replace: true })}
         reqId={selectedId}
       />
 

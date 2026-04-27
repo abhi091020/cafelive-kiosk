@@ -3,87 +3,76 @@
 import { createContext, useContext, useState, useCallback } from "react";
 import PropTypes from "prop-types";
 
-// ─── Context ──────────────────────────────────────────────────────────────────
-
 const UserContext = createContext(null);
 
-// ─── Initial State ────────────────────────────────────────────────────────────
-
 const INITIAL_USER = null;
-
-// ─── Provider ─────────────────────────────────────────────────────────────────
 
 export const UserProvider = ({ children }) => {
   const [user, setUserState] = useState(INITIAL_USER);
 
-  /**
-   * setUser — populate session after successful card / QR scan.
-   *
-   * Expected shape from Java backend /user/scan/:cardId :
-   * {
-   *   id:           string,
-   *   employeeId:   string,
-   *   name:         string,
-   *   department:   string,
-   *   shift:        string,     // "Morning" | "Evening" | "Night"
-   *   canBookGuest: boolean,
-   *   branchId:     number,     // used to filter menu by branch
-   *   branchName:   string,     // e.g. "Mumbai"
-   * }
-   *
-   * @param {Object} userData - Raw response from userAPI.scanCard()
-   */
   const setUser = useCallback((userData) => {
     if (!userData || typeof userData !== "object") {
       console.error("[UserContext] setUser received invalid data:", userData);
       return;
     }
 
-    // ── Staff response: { canteenStaffId, staffName }
-    const isStaff = !!userData.canteenStaffId;
+    const message = userData._message ?? "";
+
+    const isStaff = message === "Valid staff";
+    const isContractor = message === "Valid contractor";
+    const isEmployee = message === "Valid employee";
 
     const normalised = isStaff
       ? {
-          id: String(userData.canteenStaffId),
-          employeeId: String(userData.canteenStaffId),
+          id: String(userData.canteenStaffId ?? ""),
+          employeeId: String(userData.canteenStaffId ?? ""),
           name: userData.staffName ?? "Staff",
+          designation: userData.designation ?? "—",
           department: "—",
           shift: "General",
           canBookGuest: false,
           branchId: null,
           branchName: "",
-          empCategoryName: "", // falsy → login routes to STAFF_HOME
+          empCategoryName: "",
           userType: "staff",
         }
-      : {
-          id: String(userData.empId ?? ""),
-          employeeId: String(userData.empId ?? ""),
-          name: userData.empName ?? "Employee",
-          department: userData.deptName ?? "—",
-          shift: userData.shift ?? "General",
-          canBookGuest: userData.canBookGuest ?? false,
-          branchId: userData.branchId ?? null,
-          branchName: userData.branchName ?? "",
-          empCategoryName: userData.empCategoryName ?? "",
-          employmentType: userData.employmentType ?? "", // "OnRoll" | "OnContract"
-          userType:
-            userData.employmentType === "OnContract"
-              ? "contractor"
-              : "employee",
-        };
+      : isContractor
+        ? {
+            id: String(userData.empId ?? ""),
+            employeeId: String(userData.empId ?? ""),
+            name: userData.empName ?? "Contractor",
+            designation: userData.designation ?? "",
+            department: userData.deptName ?? "—",
+            shift: userData.shift ?? "General",
+            canBookGuest: false,
+            branchId: userData.branchId ?? null,
+            branchName: userData.branchName ?? "",
+            empCategoryName: userData.empCategoryName ?? "",
+            userType: "contractor",
+          }
+        : {
+            // isEmployee (default fallback)
+            id: String(userData.empId ?? ""),
+            employeeId: String(userData.empId ?? ""),
+            name: userData.empName ?? "Employee",
+            designation: userData.designation ?? "",
+            department: userData.deptName ?? "—",
+            shift: userData.shift ?? "General",
+            canBookGuest: userData.canBookGuest ?? false,
+            branchId: userData.branchId ?? null,
+            branchName: userData.branchName ?? "",
+            empCategoryName: userData.empCategoryName ?? "",
+            userType: "employee",
+          };
 
+    console.log("[UserContext] normalised user →", normalised);
     setUserState(normalised);
   }, []);
 
-  /**
-   * clearUser — wipe the session entirely.
-   * Called on: logout, idle timeout, session expiry.
-   */
   const clearUser = useCallback(() => {
+    sessionStorage.removeItem("cafelive_token");
     setUserState(INITIAL_USER);
   }, []);
-
-  // ── Value ─────────────────────────────────────────────────────────────────
 
   const value = {
     user,
@@ -99,12 +88,6 @@ UserProvider.propTypes = {
   children: PropTypes.node.isRequired,
 };
 
-// ─── Hook ─────────────────────────────────────────────────────────────────────
-
-/**
- * useUser — consume UserContext inside any component.
- * Must be used within <UserProvider>.
- */
 export const useUser = () => {
   const context = useContext(UserContext);
   if (!context) {

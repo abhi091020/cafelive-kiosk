@@ -41,7 +41,13 @@ export const getDayWiseFoodAllocation = async (shiftId) => {
     return response.data.result ?? { mealTypes: [] };
   } catch (err) {
     if (err.response?.status === 404) {
-      return { mealTypes: [] };
+      const message =
+        err.response?.data?.message ??
+        "Booking is unavailable as today's menu has not been set.";
+      const error = new Error(message);
+      error.serverMessage = message;
+      error.statusCode = "404";
+      throw error;
     }
     throw err;
   }

@@ -3,7 +3,6 @@
 import axios from "axios";
 
 const API_TIMEOUT_MS = 10_000;
-const AUTH_TOKEN_KEY = "cafelive_token";
 
 const axiosInstance = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL,
@@ -19,7 +18,7 @@ const axiosInstance = axios.create({
 axiosInstance.interceptors.request.use(
   (config) => {
     const token =
-      sessionStorage.getItem(AUTH_TOKEN_KEY) ||
+      sessionStorage.getItem("cafelive_token") ||
       import.meta.env.VITE_CAFELIVE_TOKEN;
 
     if (token) {
@@ -66,6 +65,9 @@ axiosInstance.interceptors.response.use(
         case 401:
           errorKey = "sessionExpired";
           break;
+        case 403:
+          errorKey = "forbidden";
+          break;
         case 409:
           errorKey = "alreadyBooked";
           break;
@@ -86,7 +88,6 @@ axiosInstance.interceptors.response.use(
     enriched.status = status ?? null;
     enriched.url = url;
     enriched.original = error;
-    // ✅ ADDED: attach backend message so UI can show it directly
     enriched.serverMessage = error.response?.data?.message ?? null;
 
     if (import.meta.env.VITE_DEV_MODE === "true") {

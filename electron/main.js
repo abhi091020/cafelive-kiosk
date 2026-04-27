@@ -1,19 +1,29 @@
-const { app, BrowserWindow, ipcMain, globalShortcut } = require("electron");
+const {
+  app,
+  BrowserWindow,
+  ipcMain,
+  globalShortcut,
+  screen,
+} = require("electron");
 const path = require("path");
 
-// ── Fix Windows DPI scaling gaps (must be before app.whenReady) ───────────────
+// ── MUST be before app.whenReady ──────────────────────────────────────────────
 app.commandLine.appendSwitch("high-dpi-support", "1");
-app.commandLine.appendSwitch("force-device-scale-factor", "1");
 
-// Set to false for production kiosk mode (true only for local development)
 const isDev = false;
 
 let mainWindow;
 let adminExit = false;
 
 function createWindow() {
+  const primaryDisplay = screen.getPrimaryDisplay();
+  const { width, height } = primaryDisplay.bounds;
+
+  console.log("=== DISPLAY INFO ===");
+  console.log("bounds:", primaryDisplay.bounds);
+  console.log("scaleFactor:", primaryDisplay.scaleFactor);
+
   mainWindow = new BrowserWindow({
-    // ── Portrait dev mode (only when isDev = true) ──
     ...(isDev
       ? {
           width: 1080,
@@ -22,57 +32,55 @@ function createWindow() {
           kiosk: false,
         }
       : {
+          width,
+          height,
+          x: 0,
+          y: 0,
           fullscreen: true,
-          kiosk: true, // Force kiosk mode (hides taskbar)
+          kiosk: true,
         }),
 
-    show: false, // ✅ Hide until fully painted — prevents white flash/gaps
-    frame: false, // No window frame
+    show: false,
+    frame: false,
     autoHideMenuBar: true,
     alwaysOnTop: true,
-    skipTaskbar: true, // Prevents taskbar entry
-    backgroundColor: "#0f0f0f", // Prevents white flash/gaps before React mounts
+    skipTaskbar: true,
+    backgroundColor: "#0f0f0f",
     webPreferences: {
       preload: path.join(__dirname, "preload.js"),
       contextIsolation: true,
       nodeIntegration: false,
-      devTools: true, // Allow DevTools via shortcut
+      devTools: true,
     },
   });
 
-  // ✅ Only show window once React has fully painted — no white edges
   mainWindow.once("ready-to-show", () => {
-    mainWindow.show();
     if (!isDev) {
       mainWindow.setKiosk(true);
       mainWindow.setFullScreen(true);
       mainWindow.setAlwaysOnTop(true, "screen-saver");
     }
+    mainWindow.show();
   });
 
-  // Load the app
   mainWindow.loadURL(
     isDev
       ? "http://localhost:3000"
       : `file://${path.join(__dirname, "../dist/index.html")}`,
   );
 
-  // In development, open DevTools automatically
   if (isDev) mainWindow.webContents.openDevTools();
 
-  // Keep window focused in kiosk mode
   mainWindow.on("blur", () => {
     if (!isDev) mainWindow.focus();
   });
 
-  // Auto-restart on crash
   mainWindow.webContents.on("render-process-gone", (event, details) => {
     console.error("Renderer crashed:", details.reason, "— relaunching...");
     app.relaunch();
     app.exit(0);
   });
 
-  // Auto-restart if window is closed (unless admin exit)
   mainWindow.on("closed", () => {
     mainWindow = null;
     if (!isDev && !adminExit) {
@@ -81,7 +89,6 @@ function createWindow() {
     }
   });
 
-  // Block right-click context menu
   mainWindow.webContents.on("context-menu", (e) => e.preventDefault());
 }
 
@@ -181,7 +188,6 @@ app.on("child-process-gone", (event, details) => {
 app.whenReady().then(() => {
   createWindow();
 
-  // ── Secret admin exit: Ctrl + Alt + Q ──
   globalShortcut.register("CommandOrControl+Alt+Q", () => {
     console.log("=== ADMIN EXIT TRIGGERED ===");
     adminExit = true;
@@ -189,7 +195,6 @@ app.whenReady().then(() => {
     app.quit();
   });
 
-  // ── Secret shortcut to open/close DevTools: Ctrl + Alt + D ──
   globalShortcut.register("CommandOrControl+Alt+D", () => {
     if (mainWindow && !mainWindow.webContents.isDevToolsOpened()) {
       mainWindow.webContents.openDevTools();
@@ -201,12 +206,10 @@ app.whenReady().then(() => {
   });
 });
 
-// Unregister shortcuts on quit
 app.on("will-quit", () => {
   globalShortcut.unregisterAll();
 });
 
-// Prevent accidental quit (but admin exit will override)
 app.on("window-all-closed", (e) => {
   if (!adminExit) e.preventDefault();
 });

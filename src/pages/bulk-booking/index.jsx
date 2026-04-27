@@ -146,6 +146,9 @@ const BulkBookingPage = () => {
   const { print } = usePrint();
   const { t } = useTranslation();
 
+  // ── Back route: staff → staff-home, contractor → login ───────────────────
+  const backTo = user?.userType === "staff" ? "/staff-home" : "/";
+
   const [shift, setShift] = useState(null);
   const [selectedItems, setSelectedItems] = useState([]);
   const [showDialog, setShowDialog] = useState(false);
@@ -159,8 +162,9 @@ const BulkBookingPage = () => {
   const [loadingShifts, setLoadingShifts] = useState(false);
   const [menuData, setMenuData] = useState({ mealTypes: [] });
   const [loadingMenu, setLoadingMenu] = useState(false);
+  const [menuErrorMsg, setMenuErrorMsg] = useState(null);
 
-  // ✅ Fetch shifts on mount and auto-select the first one
+  // ── Fetch shifts on mount and auto-select the first one ─────────────────
   useEffect(() => {
     const fetchShifts = async () => {
       setLoadingShifts(true);
@@ -168,7 +172,6 @@ const BulkBookingPage = () => {
         const data = await getShifts();
         const list = Array.isArray(data) ? data : [];
         setShifts(list);
-        // Auto-select first shift — no manual selection needed
         if (list.length > 0) {
           setShift(list[0]);
         }
@@ -182,19 +185,25 @@ const BulkBookingPage = () => {
     fetchShifts();
   }, []);
 
-  // Fetch menu whenever selected shift changes
+  // ── Fetch menu whenever selected shift changes ───────────────────────────
   useEffect(() => {
     if (!shift?.shiftId) {
       setMenuData({ mealTypes: [] });
+      setMenuErrorMsg(null);
       return;
     }
     const fetchMenu = async () => {
       setLoadingMenu(true);
+      setMenuErrorMsg(null);
       try {
         const data = await getDayWiseFoodAllocation(shift.shiftId);
         setMenuData(data ?? { mealTypes: [] });
       } catch (err) {
         console.error("[BulkBooking] getDayWiseFoodAllocation failed:", err);
+        setMenuErrorMsg(
+          err.serverMessage ??
+            "Booking is unavailable as today's menu has not been set.",
+        );
         setMenuData({ mealTypes: [] });
       } finally {
         setLoadingMenu(false);
@@ -203,7 +212,7 @@ const BulkBookingPage = () => {
     fetchMenu();
   }, [shift?.shiftId]);
 
-  // ── Scroll indicator ────────────────────────────────────────────────────────
+  // ── Scroll indicator ─────────────────────────────────────────────────────
   const updateScroll = () => {
     const el = scrollRef.current;
     if (!el) return;
@@ -216,7 +225,7 @@ const BulkBookingPage = () => {
     updateScroll();
   }, [selectedItems]);
 
-  // ── Item handlers ───────────────────────────────────────────────────────────
+  // ── Item handlers ────────────────────────────────────────────────────────
   const selectedItemIds = useMemo(
     () => new Set(selectedItems.map((i) => i.id)),
     [selectedItems],
@@ -243,7 +252,7 @@ const BulkBookingPage = () => {
   const handleDelete = (itemId) =>
     setSelectedItems((prev) => prev.filter((i) => i.id !== itemId));
 
-  // ── Booking ─────────────────────────────────────────────────────────────────
+  // ── Booking ──────────────────────────────────────────────────────────────
   const isEnabled = selectedItems.length > 0;
 
   const handleBookMeal = () => {
@@ -303,7 +312,7 @@ const BulkBookingPage = () => {
     }
   };
 
-  // ── Scroll dots ─────────────────────────────────────────────────────────────
+  // ── Scroll dots ──────────────────────────────────────────────────────────
   const DOT_COUNT = Math.min(selectedItems.length, 5);
   const activeDot = Math.round(scrollRatio * (DOT_COUNT - 1));
 
@@ -329,7 +338,10 @@ const BulkBookingPage = () => {
       `}</style>
 
       <Header />
-      <BackButton to="/staff-home" />
+
+      {/* ── BACK BUTTON — staff → /staff-home, contractor → / (login) ── */}
+      <BackButton to={backTo} />
+
       <UserWelcome />
       <DateTimeDisplay />
 
@@ -340,11 +352,12 @@ const BulkBookingPage = () => {
         onShiftChange={handleShiftChange}
         menuData={menuData}
         loadingMenu={loadingMenu}
+        menuErrorMsg={menuErrorMsg}
         selectedItemIds={selectedItemIds}
         onItemToggle={handleItemToggle}
       />
 
-      {/* ── Selected items + Book button ──────────────────────────────────── */}
+      {/* ── Selected items + Book button ─────────────────────────────────── */}
       <div
         style={{
           position: "absolute",

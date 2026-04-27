@@ -139,7 +139,7 @@ const ConfirmDialog = ({
               e.currentTarget.style.background = activeGradient;
             }}
             onPointerLeave={(e) => {
-              e.currentTarget.style.transform = "scale(1)";
+              e.currentTarget.style.transform = "scale(1)"; 
               e.currentTarget.style.background = activeGradient;
             }}
           >

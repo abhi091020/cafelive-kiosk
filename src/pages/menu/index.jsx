@@ -267,8 +267,18 @@ const MenuPage = () => {
   const { t, i18n } = useTranslation();
   const lang = i18n.language;
 
-  // staffId is set when staff books on behalf of an employee, null for self-booking
+  // ── staffId + bookedEmployee from route state (set by EmployeeBookingPage) ──
   const staffId = location.state?.staffId ?? null;
+  const bookedEmployee = location.state?.bookedEmployee ?? null;
+
+  // ── If staff booked for an employee, use that employee's ID for the order ──
+  // ── Otherwise use the logged-in user's own employeeId ─────────────────────
+  const activeEmployeeId = bookedEmployee
+    ? String(bookedEmployee.empId)
+    : user.employeeId;
+
+  // ── Back route: staff flow → /employee-booking, employee flow → /home ──────
+  const backTo = staffId ? "/employee-booking" : "/home";
 
   const [selectedItems, setSelectedItems] = useState([]);
   const [shift, setShift] = useState(null);
@@ -352,10 +362,9 @@ const MenuPage = () => {
 
     try {
       const response = await bookOrder({
-        employeeId: user.employeeId,
+        employeeId: activeEmployeeId, // ✅ booked employee OR self
         shiftId: shift.shiftId,
-        staffId,
-        // ✅ i.id IS the menuId (set as String(menu.menuId) in BookOrderCard)
+        staffId, // ✅ null for self-booking
         items: selectedItems.map((i) => ({
           menuId: i.id,
           quantity: i.quantity,
@@ -380,7 +389,7 @@ const MenuPage = () => {
     setTimeout(() => {
       navigate("/order-success", {
         state: {
-          user,
+          user: bookedEmployee ?? user, // ✅ show booked employee on success page
           items: selectedItems.map((i) => ({
             ...i,
             name: getItemName(i),
@@ -419,8 +428,13 @@ const MenuPage = () => {
         `}</style>
 
       <Header />
-      <BackButton to="/home" />
-      <UserWelcome />
+
+      {/* ── BACK BUTTON — staff flow → /employee-booking, else → /home ── */}
+      <BackButton to={backTo} />
+
+      {/* ── Shows booked employee name when staff books, else logged-in user ── */}
+      <UserWelcome overrideUser={bookedEmployee} />
+
       <DateTimeDisplay />
 
       <BookOrderCard

@@ -3,11 +3,22 @@
 import { useTranslation } from "react-i18next";
 import { useUser } from "@context/UserContext";
 
-const UserWelcome = () => {
+const UserWelcome = ({ overrideUser = null }) => {
   const { user } = useUser();
   const { t } = useTranslation();
 
-  if (!user) return null;
+  // ── Use overrideUser when staff books on behalf of an employee ────────────
+  const displayUser = overrideUser
+    ? {
+        name: overrideUser.empName ?? overrideUser.staffName ?? "Employee",
+        employeeId: String(
+          overrideUser.empId ?? overrideUser.canteenStaffId ?? "",
+        ),
+        designation: overrideUser.designation ?? "",
+      }
+    : user;
+
+  if (!displayUser) return null;
 
   return (
     <div
@@ -30,7 +41,7 @@ const UserWelcome = () => {
           lineHeight: 1.0,
         }}
       >
-        {t("home.welcomeUser", { name: user.name })}
+        {t("home.welcomeUser", { name: displayUser.name })}
       </h1>
 
       {/* User Info — values only, no labels */}
@@ -45,7 +56,7 @@ const UserWelcome = () => {
           lineHeight: 0.5,
         }}
       >
-        {user.employeeId} - {user.department}
+        {displayUser.employeeId} - {displayUser.designation}
       </p>
     </div>
   );

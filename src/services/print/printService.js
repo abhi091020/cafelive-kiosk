@@ -64,20 +64,40 @@ export const createAndPrintGuestTicket = async ({
   requestId,
   guestDetails,
   hostDetails,
-  itemName,
   print,
 }) => {
   try {
-    const html = await buildGuestTicketHtml({
-      requestId,
-      guestDetails,
-      hostDetails,
-      itemName,
-    });
-    await print({ html });
-    console.log("[printService] Guest ticket printed successfully.");
+    const qrCodes = guestDetails?.questQrCodes ?? [];
+
+    // If backend already generated QR codes → print one ticket per QR code
+    // Fallback → print 1 + coGuestCount tickets using requestId as QR value
+    const tickets =
+      qrCodes.length > 0
+        ? qrCodes.map((qr) => ({ qrCodeNumber: String(qr) }))
+        : Array.from(
+            { length: 1 + (Number(guestDetails?.coGuestCount) || 0) },
+            () => ({ qrCodeNumber: String(requestId) }),
+          );
+
+    console.log(
+      `[printService] Printing ${tickets.length} guest ticket(s) for requestId: ${requestId}`,
+    );
+
+    for (const { qrCodeNumber } of tickets) {
+      const html = await buildGuestTicketHtml({
+        requestId,
+        guestDetails,
+        hostDetails,
+        itemName: "Special Veg Meal",
+        qrCodeNumber, // ← real 16-digit QR from backend, or requestId as fallback
+      });
+      await print({ html });
+    }
+
+    console.log("[printService] All guest tickets printed successfully.");
   } catch (err) {
     console.error("[printService] Failed to build or print guest ticket:", err);
+    throw err; // re-throw so GuestPage can show the error
   }
 };
 
@@ -86,13 +106,12 @@ export const createAndPrintBulkTicket = async ({
   contractorName,
   items,
   print,
-  bookingResult, // ✅ now handles bookingResult with qrCodeNumber per ticket
+  bookingResult,
 }) => {
   try {
     const expandedItems = [];
 
     if (Array.isArray(bookingResult) && bookingResult.length > 0) {
-      // ✅ Use QR codes from API response
       for (const booking of bookingResult) {
         const matchedItem = items.find(
           (i) => String(i.id) === String(booking.menuId),
@@ -103,7 +122,6 @@ export const createAndPrintBulkTicket = async ({
         });
       }
     } else {
-      // Fallback: expand by quantity
       for (const item of items) {
         const qty = Number(item.quantity) || 1;
         for (let i = 0; i < qty; i++) {

@@ -127,6 +127,10 @@ export const buildSingleItemTicketHtml = async ({
   const couponLabel = getCouponType(itemName);
   const qrDataUrl = await generateQR(qrCodeNumber);
 
+  const empId = user.employeeId ?? user.empId ?? "—";
+  const empName = user.name ?? user.empName ?? "—";
+  const designation = user.designation ?? "—";
+
   return `<!DOCTYPE html>
 <html><head><meta charset="UTF-8" /><style>${thermalCSS}</style></head>
 <body>
@@ -140,8 +144,9 @@ export const buildSingleItemTicketHtml = async ({
 
   <div class="meta-row">
     <div class="meta-left">
-      <div class="label">EMP ID: ${user.employeeId}</div>
-      <div class="value">${user.name}</div>
+      <div class="label">EMP ID: ${empId}</div>
+      <div class="value">${empName}</div>
+      <div class="value">${designation}</div>
     </div>
     <div class="meta-right">
       <div class="date">${dateStr}</div>
@@ -169,6 +174,7 @@ export const buildGuestTicketHtml = async ({
   guestDetails,
   hostDetails,
   itemName = "Special Veg Meal",
+  qrCodeNumber, // ← from backend; falls back to local string if absent
 }) => {
   const now = new Date();
   const dateStr = now.toLocaleDateString("en-GB");
@@ -178,7 +184,8 @@ export const buildGuestTicketHtml = async ({
     hour12: true,
   });
 
-  const qrData = `GUEST|${requestId}|${dateStr}`;
+  // Use the backend QR number directly; only build a local string as last resort
+  const qrData = qrCodeNumber ?? `GUEST|${requestId}|${dateStr}`;
   const qrDataUrl = await generateQR(qrData);
 
   return `<!DOCTYPE html>
@@ -195,7 +202,12 @@ export const buildGuestTicketHtml = async ({
   <div class="meta-row">
     <div class="meta-left">
       <div class="label">Guest Name:</div>
-      <div class="value">${guestDetails?.name ?? "—"}${(guestDetails?.company ?? guestDetails?.organization) ? ` / ${guestDetails.company ?? guestDetails.organization}` : ""}</div>
+      <div class="value">${guestDetails?.name ?? "—"}</div>
+      ${
+        (guestDetails?.company ?? guestDetails?.organization)
+          ? `<div class="value">${guestDetails.company ?? guestDetails.organization}</div>`
+          : ""
+      }
     </div>
     <div class="meta-right">
       <div class="date">${dateStr}</div>

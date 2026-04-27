@@ -1,4 +1,5 @@
 // src/pages/employee-booking/index.jsx
+
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Header, Footer, BackButton } from "@common";
@@ -15,7 +16,7 @@ const EmployeeBookingPage = () => {
   const [employeeId, setEmployeeId] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const { user, setUser } = useUser(); // ✅ also destructure `user`
+  const { user } = useUser(); // ✅ only read — never overwrite staff session
   const navigate = useNavigate();
 
   const handleSubmit = async () => {
@@ -24,18 +25,42 @@ const EmployeeBookingPage = () => {
     setLoading(true);
     setError(null);
 
-    // ✅ Capture staffId BEFORE setUser() overwrites the session
-    const staffId = user?.userType === "staff" ? Number(user.id) : null;
-
     try {
       const result = await validateUser(employeeId);
 
-      setUser(result);
+      // ── Reject staff accounts ──────────────────────────────────────────
+      if (result._message === "Valid staff") {
+        setError("Please enter an Employee ID.");
+        return;
+      }
 
-      // ✅ Pass staffId to MenuPage via route state
-      navigate(ROUTES.MENU, { state: { staffId } });
+      // ── Reject contractor accounts ─────────────────────────────────────
+      if (result._message === "Valid contractor") {
+        setError("Please enter an Employee ID.");
+        return;
+      }
+
+      // ── Only Valid employees allowed ───────────────────────────────────
+      if (result._message !== "Valid employee") {
+        setError("Employee not found. Please try again.");
+        return;
+      }
+
+      // ✅ DO NOT call setUser() — staff session must remain intact
+      // Pass employee data via route state to MenuPage
+      navigate(ROUTES.MENU, {
+        state: {
+          staffId: Number(user.id), // logged-in staff's ID
+          bookedEmployee: result, // looked-up employee
+        },
+      });
     } catch (err) {
-      setError(err.serverMessage ?? "User not found. Please try again.");
+      // Backend returns 500 for contractor IDs in this endpoint
+      if (err.statusCode === "500") {
+        setError("Please enter an Employee ID.");
+      } else {
+        setError(err.serverMessage ?? "Employee not found. Please try again.");
+      }
     } finally {
       setLoading(false);
     }

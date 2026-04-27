@@ -6,22 +6,16 @@ import { useTranslation } from "react-i18next";
 import { Header, Footer } from "@common";
 import successFeedImg from "@assets/successfeed.png";
 
-// ── Thank You images ──────────────────────────────────────────────────────────
-import thankYouEn from "@assets/thankyou.svg";
-import thankYouHiMr from "@assets/thankumarathi.png"; // shared for Hindi + Marathi
-
-// ── Subtitle images ───────────────────────────────────────────────────────────
-import subtitleEn from "@assets/feedbacksubtitle.svg";
-import subtitleHi from "@assets/feedbacksubtitlehindi.png";
-import subtitleMr from "@assets/feedbacksubtitlemarathi.png";
-
-const THANK_YOU_IMAGES = { en: thankYouEn, hi: thankYouHiMr, mr: thankYouHiMr };
-const SUBTITLE_IMAGES  = { en: subtitleEn, hi: subtitleHi,   mr: subtitleMr   };
-
 // ─── Confetti ─────────────────────────────────────────────────────────────────
 const CONFETTI_COLORS = [
-  "#EA4D4E", "#B91C1C", "#FFD700", "#4CAF50",
-  "#2196F3", "#FF9800", "#E91E63", "#00BCD4",
+  "#EA4D4E",
+  "#B91C1C",
+  "#FFD700",
+  "#4CAF50",
+  "#2196F3",
+  "#FF9800",
+  "#E91E63",
+  "#00BCD4",
 ];
 
 const ConfettiPiece = ({ style }) => <div style={style} />;
@@ -49,22 +43,24 @@ const generateConfetti = (count = 60) =>
 // ─── FeedbackSuccessPage ──────────────────────────────────────────────────────
 const FeedbackSuccessPage = () => {
   const navigate = useNavigate();
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const lang = i18n.language;
 
   const [countdown, setCountdown] = useState(5);
   const [confetti] = useState(() => generateConfetti(70));
 
-  const thankYouImg = THANK_YOU_IMAGES[lang] ?? thankYouEn;
-  const subtitleImg = SUBTITLE_IMAGES[lang]  ?? subtitleEn;
+  const langFont =
+    lang === "hi" || lang === "mr"
+      ? "'Poppins', 'Noto Sans Devanagari', sans-serif"
+      : "'Poppins', sans-serif";
 
   useEffect(() => {
     if (countdown <= 0) {
       navigate("/");
       return;
     }
-    const t = setTimeout(() => setCountdown((c) => c - 1), 1000);
-    return () => clearTimeout(t);
+    const timer = setTimeout(() => setCountdown((c) => c - 1), 1000);
+    return () => clearTimeout(timer);
   }, [countdown, navigate]);
 
   return (
@@ -77,17 +73,18 @@ const FeedbackSuccessPage = () => {
         backgroundColor: "#FFFFFF",
         display: "flex",
         flexDirection: "column",
+        fontFamily: langFont,
       }}
     >
-      {/* ── Confetti ────────────────────────────────────────────────────── */}
+      {/* ── Confetti ──────────────────────────────────────────────────────── */}
       {confetti.map(({ key, style }) => (
         <ConfettiPiece key={key} style={style} />
       ))}
 
-      {/* ── Header ──────────────────────────────────────────────────────── */}
+      {/* ── Header ────────────────────────────────────────────────────────── */}
       <Header />
 
-      {/* ── Main ────────────────────────────────────────────────────────── */}
+      {/* ── Main content ──────────────────────────────────────────────────── */}
       <div
         style={{
           flex: 1,
@@ -95,8 +92,8 @@ const FeedbackSuccessPage = () => {
           flexDirection: "column",
           alignItems: "center",
           justifyContent: "center",
-          padding: "0 4%",
-          gap: "20px",
+          padding: "clamp(80px, 12vh, 120px) 4% clamp(60px, 8vh, 100px)",
+          gap: "12px",
           position: "relative",
         }}
       >
@@ -107,19 +104,21 @@ const FeedbackSuccessPage = () => {
             width: "min(72vw, 720px)",
             height: "min(72vw, 720px)",
             borderRadius: "50%",
-            background: "radial-gradient(circle, rgba(234,77,78,0.10) 0%, rgba(234,77,78,0) 70%)",
+            background:
+              "radial-gradient(circle, rgba(234,77,78,0.10) 0%, rgba(234,77,78,0) 70%)",
             animation: "pulseRing 2.4s ease-in-out infinite",
             pointerEvents: "none",
             zIndex: 0,
           }}
         />
 
-        {/* Illustration — unchanged */}
+        {/* Illustration — same size as order success */}
         <div
           style={{
             position: "relative",
             zIndex: 1,
-            animation: "popIn 0.55s cubic-bezier(0.175, 0.885, 0.32, 1.275) both",
+            animation:
+              "popIn 0.55s cubic-bezier(0.175, 0.885, 0.32, 1.275) both",
           }}
         >
           <img
@@ -135,29 +134,40 @@ const FeedbackSuccessPage = () => {
           />
         </div>
 
-        {/* "Thank you!" — language aware */}
-        <img
-          src={thankYouImg}
-          alt="Thank you!"
+        {/* "Thank you!" — dynamic i18n text */}
+        <p
           style={{
-            width: "clamp(200px, 30vw, 310px)",
-            height: "auto",
+            margin: 0,
+            fontSize: "clamp(2rem, 5vw, 3.5rem)",
+            fontWeight: 800,
+            color: "#B91C1C",
+            fontFamily: langFont,
+            textAlign: "center",
             animation: "fadeUp 0.5s 0.25s ease both",
             zIndex: 1,
+            lineHeight: 1.2,
           }}
-        />
+        >
+          {t("feedback.feedbackSuccess")}
+        </p>
 
-        {/* Subtitle — language aware */}
-        <img
-          src={subtitleImg}
-          alt="Your feedback has been submitted successfully."
+        {/* Subtitle — dynamic i18n text */}
+        <p
           style={{
-            width: "clamp(320px, 55vw, 710px)",
-            height: "auto",
+            margin: 0,
+            fontSize: "clamp(1.2rem, 3vw, 2rem)",
+            fontWeight: 700,
+            color: "#B91C1C",
+            fontFamily: langFont,
+            textAlign: "center",
             animation: "fadeUp 0.5s 0.35s ease both",
             zIndex: 1,
+            maxWidth: "700px",
+            lineHeight: 1.4,
           }}
-        />
+        >
+          {t("feedback.feedbackSuccessMessage")}
+        </p>
 
         {/* Countdown */}
         <p
@@ -165,6 +175,7 @@ const FeedbackSuccessPage = () => {
             margin: 0,
             fontSize: "1.05rem",
             color: "#9CA3AF",
+            fontFamily: "'Poppins', sans-serif",
             animation: "fadeUp 0.5s 0.45s ease both",
             zIndex: 1,
           }}
@@ -175,6 +186,7 @@ const FeedbackSuccessPage = () => {
               color: "#B91C1C",
               fontWeight: 700,
               fontSize: "1.2rem",
+              fontFamily: "'Poppins', sans-serif",
               display: "inline-block",
               animation: "countPulse 1s ease infinite",
               minWidth: "22px",
@@ -187,11 +199,13 @@ const FeedbackSuccessPage = () => {
         </p>
       </div>
 
-      {/* ── Footer ──────────────────────────────────────────────────────── */}
+      {/* ── Footer ────────────────────────────────────────────────────────── */}
       <Footer />
 
-      {/* ── Keyframes ───────────────────────────────────────────────────── */}
+      {/* ── Keyframes + Font Imports ───────────────────────────────────────── */}
       <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&family=Noto+Sans+Devanagari:wght@400;700;800&display=swap');
+
         @keyframes popIn {
           0%   { opacity: 0; transform: scale(0.7) translateY(30px); }
           100% { opacity: 1; transform: scale(1) translateY(0); }

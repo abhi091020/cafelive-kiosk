@@ -27,6 +27,7 @@ const BookOrderCard = ({
   const [menuItems, setMenuItems] = useState({});
   const [menuLoading, setMenuLoading] = useState(false);
   const [menuError, setMenuError] = useState(false);
+  const [menuErrorMsg, setMenuErrorMsg] = useState(null);
 
   const shiftBtnRef = useRef(null);
   const rightPanelRef = useRef(null);
@@ -68,6 +69,7 @@ const BookOrderCard = ({
     if (!shift?.shiftId) return;
     setMenuLoading(true);
     setMenuError(false);
+    setMenuErrorMsg(null);
     setCategories([]);
     setMenuItems({});
     setActiveCategory(null);
@@ -117,6 +119,9 @@ const BookOrderCard = ({
         console.error(
           "[BookOrderCard] getDayWiseFoodAllocation failed:",
           err.message,
+        );
+        setMenuErrorMsg(
+          err.serverMessage ?? "Could not load menu. Please try again.",
         );
         setMenuError(true);
       })
@@ -291,93 +296,96 @@ const BookOrderCard = ({
           overflow: "hidden",
         }}
       >
-        {/* ── LEFT SIDEBAR ─────────────────────────────────────────────── */}
-        <div
-          style={{
-            width: "26.41%",
-            flexShrink: 0,
-            borderRight: "1px solid #F3F4F6",
-            display: "flex",
-            flexDirection: "column",
-          }}
-        >
-          {menuLoading
-            ? [1, 2, 3].map((n) => (
-                <div
-                  key={n}
-                  style={{
-                    height: SIDEBAR_HEIGHT,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    borderBottom: "1px solid #F3F4F6",
-                    opacity: 0.4,
-                  }}
-                >
+        {/* ── Hide sidebar when error ── */}
+        {!menuError && (
+          <div
+            style={{
+              width: "26.41%",
+              flexShrink: 0,
+              borderRight: "1px solid #F3F4F6",
+              display: "flex",
+              flexDirection: "column",
+            }}
+          >
+            {menuLoading
+              ? [1, 2, 3].map((n) => (
                   <div
+                    key={n}
                     style={{
-                      width: 60,
-                      height: 60,
-                      borderRadius: "50%",
-                      background: "#E5E7EB",
-                    }}
-                  />
-                </div>
-              ))
-            : categories.map((cat, idx, arr) => (
-                <div
-                  key={cat.key}
-                  onClick={() => handleCategoryChange(cat.key)}
-                  style={{
-                    height: SIDEBAR_HEIGHT,
-                    flexShrink: 0,
-                    display: "flex",
-                    flexDirection: "column",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    padding: "16px 0",
-                    borderLeft:
-                      activeCategory === cat.key
-                        ? "3px solid #B91C1C"
-                        : "3px solid transparent",
-                    background:
-                      activeCategory === cat.key ? "#FFF0F0" : "transparent",
-                    borderBottom:
-                      idx < arr.length - 1 ? "1px solid #F3F4F6" : "none",
-                    cursor: "pointer",
-                    transition: "background 0.15s",
-                  }}
-                >
-                  {cat.categoryImage && (
-                    <img
-                      src={cat.categoryImage}
-                      alt={getCatLabel(cat)}
-                      style={{
-                        width: IMG_SIZE,
-                        height: IMG_SIZE,
-                        objectFit: "cover",
-                        borderRadius: "10px",
-                      }}
-                      onError={(e) => {
-                        e.currentTarget.style.display = "none";
-                      }}
-                    />
-                  )}
-                  <p
-                    style={{
-                      fontSize: "clamp(1.2rem, 2vw, 1.7rem)",
-                      fontWeight: activeCategory === cat.key ? 700 : 500,
-                      color: activeCategory === cat.key ? "#B91C1C" : "#1F2937",
-                      margin: cat.categoryImage ? "8px 0 0 0" : "0",
-                      textAlign: "center",
-                      transition: "color 0.15s",
+                      height: SIDEBAR_HEIGHT,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      borderBottom: "1px solid #F3F4F6",
+                      opacity: 0.4,
                     }}
                   >
-                    {getCatLabel(cat)}
-                  </p>
-                </div>
-              ))}
-        </div>
+                    <div
+                      style={{
+                        width: 60,
+                        height: 60,
+                        borderRadius: "50%",
+                        background: "#E5E7EB",
+                      }}
+                    />
+                  </div>
+                ))
+              : categories.map((cat, idx, arr) => (
+                  <div
+                    key={cat.key}
+                    onClick={() => handleCategoryChange(cat.key)}
+                    style={{
+                      height: SIDEBAR_HEIGHT,
+                      flexShrink: 0,
+                      display: "flex",
+                      flexDirection: "column",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      padding: "16px 0",
+                      borderLeft:
+                        activeCategory === cat.key
+                          ? "3px solid #B91C1C"
+                          : "3px solid transparent",
+                      background:
+                        activeCategory === cat.key ? "#FFF0F0" : "transparent",
+                      borderBottom:
+                        idx < arr.length - 1 ? "1px solid #F3F4F6" : "none",
+                      cursor: "pointer",
+                      transition: "background 0.15s",
+                    }}
+                  >
+                    {cat.categoryImage && (
+                      <img
+                        src={cat.categoryImage}
+                        alt={getCatLabel(cat)}
+                        style={{
+                          width: IMG_SIZE,
+                          height: IMG_SIZE,
+                          objectFit: "cover",
+                          borderRadius: "10px",
+                        }}
+                        onError={(e) => {
+                          e.currentTarget.style.display = "none";
+                        }}
+                      />
+                    )}
+                    <p
+                      style={{
+                        fontSize: "clamp(1.5rem, 2.4vw, 2.1rem)",
+                        fontWeight: activeCategory === cat.key ? 700 : 500,
+                        color:
+                          activeCategory === cat.key ? "#B91C1C" : "#1F2937",
+                        margin: cat.categoryImage ? "8px 0 0 0" : "0",
+                        textAlign: "center",
+                        transition: "color 0.15s",
+                      }}
+                    >
+                      {getCatLabel(cat)}
+                    </p>
+                  </div>
+                ))}
+          </div>
+        )}
 
         {/* ── RIGHT PANEL ──────────────────────────────────────────────── */}
         <div
@@ -410,24 +418,24 @@ const BookOrderCard = ({
             <div
               style={{
                 display: "flex",
-                flexDirection: "column",
                 alignItems: "center",
                 justifyContent: "center",
-                height: ROW_HEIGHT,
-                gap: "8px",
+                width: "100%",
+                minHeight: `calc(${SIDEBAR_HEIGHT} * 3)`,
               }}
             >
               <p
                 style={{
+                  margin: 0,
+                  fontSize: "1.2rem",
+                  fontWeight: 600,
                   color: "#B91C1C",
-                  fontWeight: 700,
-                  fontSize: "1.1rem",
+                  textAlign: "center",
+                  lineHeight: 1.6,
+                  padding: "0 32px",
                 }}
               >
-                ⚠ Could not load menu
-              </p>
-              <p style={{ color: "#9CA3AF", fontSize: "0.9rem" }}>
-                Check network or contact admin
+                {menuErrorMsg ?? "⚠ Could not load menu"}
               </p>
             </div>
           )}
@@ -447,7 +455,7 @@ const BookOrderCard = ({
             </div>
           )}
 
-          {/* ── Menu rows: image + name + items subtitle ── */}
+          {/* ── Menu rows ── */}
           {!menuLoading &&
             !menuError &&
             rows.map((menu, index) => {
@@ -475,7 +483,6 @@ const BookOrderCard = ({
                       userSelect: "none",
                     }}
                   >
-                    {/* ── Circular menu image ── */}
                     {menu.menuImage && (
                       <img
                         src={menu.menuImage}
@@ -484,7 +491,7 @@ const BookOrderCard = ({
                           width: IMG_SIZE,
                           height: IMG_SIZE,
                           objectFit: "cover",
-                          borderRadius: "50%", // ← circle like Figma
+                          borderRadius: "50%",
                           flexShrink: 0,
                           border: isSelected
                             ? "2.5px solid #B91C1C"
@@ -498,11 +505,10 @@ const BookOrderCard = ({
                     )}
 
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      {/* Menu name */}
                       <p
                         style={{
                           margin: "0 0 6px 0",
-                          fontSize: "clamp(1.3rem, 2.2vw, 1.85rem)",
+                          fontSize: "clamp(1.6rem, 2.6vw, 2.2rem)",
                           fontWeight: 700,
                           color: isSelected ? "#B91C1C" : "#A50000",
                           lineHeight: 1.3,
@@ -511,12 +517,11 @@ const BookOrderCard = ({
                         {menuName}
                       </p>
 
-                      {/* Items subtitle */}
                       {subtitle && (
                         <p
                           style={{
                             margin: 0,
-                            fontSize: "clamp(0.85rem, 1.3vw, 1.1rem)",
+                            fontSize: "clamp(1.05rem, 1.6vw, 1.4rem)",
                             color: "#6B7280",
                             fontWeight: 400,
                             lineHeight: 1.4,
