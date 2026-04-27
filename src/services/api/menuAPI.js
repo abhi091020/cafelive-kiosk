@@ -27,7 +27,7 @@ const getTodayDate = () => new Date().toISOString().split("T")[0]; // YYYY-MM-DD
 
 // ─── getShifts ────────────────────────────────────────────────────────────────
 export const getShifts = async () => {
-  const response = await axiosInstance.get("/shift/getAllShiftData");
+  const response = await axiosInstance.get("/shift/getActiveShifts");
   return response.data.result;
 };
 

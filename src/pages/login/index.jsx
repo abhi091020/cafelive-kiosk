@@ -64,7 +64,12 @@ const LoginPage = () => {
     disabled: !scanEnabled,
   });
 
-  const handleScan = () => setScanEnabled(true);
+  const handleScan = () => {
+    setScanEnabled(true);
+    setTimeout(() => {
+      setScanEnabled(false);
+    }, 10000); // 10 seconds
+  };
   const handleDismissError = () => setError(null);
 
   return (
@@ -180,7 +185,7 @@ const LoginPage = () => {
       </div>
 
       {/* ── LOADING / SCAN READY INDICATOR ── */}
-      {(loading || scanEnabled) && !error && (
+      {/* {(loading || scanEnabled) && !error && (
         <div
           style={{
             position: "absolute",
@@ -196,7 +201,7 @@ const LoginPage = () => {
         >
           {loading ? "Verifying..." : "Ready — please scan your face"}
         </div>
-      )}
+      )} */}
 
       {/* ── READY TO SCAN BUTTON ── */}
       <div

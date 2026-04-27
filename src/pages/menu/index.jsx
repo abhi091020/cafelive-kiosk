@@ -349,9 +349,8 @@ const MenuPage = () => {
     setShowDialog(true);
   };
 
-  const handleDialogYes = () => setShowDialog(false);
-
-  const handleDialogNo = async () => {
+  // ── Yes = confirm & book order ────────────────────────────────────────────
+  const handleConfirmYes = async () => {
     if (bookingLockRef.current) return;
     bookingLockRef.current = true;
 
@@ -362,9 +361,9 @@ const MenuPage = () => {
 
     try {
       const response = await bookOrder({
-        employeeId: activeEmployeeId, // ✅ booked employee OR self
+        employeeId: activeEmployeeId,
         shiftId: shift.shiftId,
-        staffId, // ✅ null for self-booking
+        staffId,
         items: selectedItems.map((i) => ({
           menuId: i.id,
           quantity: i.quantity,
@@ -389,7 +388,7 @@ const MenuPage = () => {
     setTimeout(() => {
       navigate("/order-success", {
         state: {
-          user: bookedEmployee ?? user, // ✅ show booked employee on success page
+          user: bookedEmployee ?? user,
           items: selectedItems.map((i) => ({
             ...i,
             name: getItemName(i),
@@ -400,6 +399,9 @@ const MenuPage = () => {
       });
     }, 150);
   };
+
+  // ── No = close dialog, go back to menu ───────────────────────────────────
+  const handleConfirmNo = () => setShowDialog(false);
 
   const DOT_COUNT = Math.min(selectedItems.length, 5);
   const activeDot = Math.round(scrollRatio * (DOT_COUNT - 1));
@@ -738,13 +740,14 @@ const MenuPage = () => {
 
       <Footer />
 
+      {/* ── Yes = confirm booking, No = go back to menu ── */}
       <ConfirmDialog
         visible={showDialog}
-        message={t("menu.addMoreMessage")}
+        message={t("menu.confirmOrder")}
         yesLabel={t("general.yes")}
         noLabel={t("general.no")}
-        onYes={handleDialogYes}
-        onNo={handleDialogNo}
+        onYes={handleConfirmYes}
+        onNo={handleConfirmNo}
       />
 
       <ShiftAlertDialog

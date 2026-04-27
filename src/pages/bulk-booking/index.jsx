@@ -260,9 +260,8 @@ const BulkBookingPage = () => {
     setShowDialog(true);
   };
 
-  const handleDialogYes = () => setShowDialog(false);
-
-  const handleDialogNo = async () => {
+  // ── Yes = confirm & book order ────────────────────────────────────────────
+  const handleConfirmYes = async () => {
     if (bookingLockRef.current) return;
     bookingLockRef.current = true;
 
@@ -311,6 +310,9 @@ const BulkBookingPage = () => {
       setIsBooking(false);
     }
   };
+
+  // ── No = close dialog, go back to menu ───────────────────────────────────
+  const handleConfirmNo = () => setShowDialog(false);
 
   // ── Scroll dots ──────────────────────────────────────────────────────────
   const DOT_COUNT = Math.min(selectedItems.length, 5);
@@ -516,13 +518,14 @@ const BulkBookingPage = () => {
 
       <Footer />
 
+      {/* ── Yes = confirm booking, No = go back to menu ── */}
       <ConfirmDialog
         visible={showDialog}
-        message={t("menu.addMoreMessage")}
+        message={t("menu.confirmOrder")}
         yesLabel={t("general.yes")}
         noLabel={t("general.no")}
-        onYes={handleDialogYes}
-        onNo={handleDialogNo}
+        onYes={handleConfirmYes}
+        onNo={handleConfirmNo}
       />
 
       <BookingErrorDialog
