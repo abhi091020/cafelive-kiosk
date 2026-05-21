@@ -1,4 +1,13 @@
-/* src\styles\global.css */
+/* src/styles/global.css */
+
+/* ── Google Fonts — Montserrat (buttons) ──────────────────────────────────── */
+@import url("https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap");
+
+/* ── Google Fonts — Poppins (headings / welcome) ─────────────────────────── */
+@import url("https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap");
+
+/* ── Google Fonts — Mooli (language selector) ────────────────────────────── */
+@import url("https://fonts.googleapis.com/css2?family=Mooli&display=swap");
 
 /* ── Import design tokens ─────────────────────────────────────────────────── */
 @import "./variables.css";
@@ -14,20 +23,20 @@
 
 /* ── Root ─────────────────────────────────────────────────────────────────── */
 html {
-  width: 100%; /* ✅ FIX: was missing, causes white sides */
+  width: 100%;
   height: 100%;
   font-size: 16px;
-  background-color: #0f0f0f; /* ✅ FIX: hardcoded before CSS vars load */
+  background-color: #0f0f0f;
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
 }
 
 body {
-  width: 100%; /* ✅ FIX: explicit width */
+  width: 100%;
   height: 100%;
   font-family: var(--font-family);
   font-size: var(--font-md);
-  background-color: #0f0f0f; /* ✅ FIX: hardcoded, not var() — loads instantly */
+  background-color: #0f0f0f;
   color: var(--color-text-primary);
   line-height: 1.5;
   overflow: hidden;
@@ -41,13 +50,13 @@ body {
 
 /* ── Root mount point ─────────────────────────────────────────────────────── */
 #root {
-  width: 100vw; /* ✅ FIX: use vw/vh not % — absolute viewport units */
+  width: 100vw;
   height: 100vh;
-  min-width: 100vw; /* ✅ FIX: prevent any shrinking */
+  min-width: 100vw;
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  background-color: #0f0f0f; /* ✅ FIX: belt-and-suspenders */
+  background-color: #0f0f0f;
   overflow: hidden;
 }
 
@@ -78,7 +87,7 @@ button {
   cursor: pointer;
   border: none;
   background: none;
-  font-family: var(--font-family);
+  font-family: var(--font-family-buttons); /* ← Montserrat for all buttons */
   font-size: var(--btn-font);
   touch-action: manipulation;
   -webkit-tap-highlight-color: transparent;

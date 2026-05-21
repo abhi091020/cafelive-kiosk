@@ -1,60 +1,81 @@
-// src\services\api\feedbackAPI.js
-
 import axiosInstance from "./axiosInstance";
 
-// ─── submitFoodFeedback ───────────────────────────────────────────────────────
-
+// ─── getFoodFeedbackQuestions ─────────────────────────────────────────────────
 /**
- * submitFoodFeedback — submit ratings for today's meal quality.
- *
- * @param  {Object} payload
- * @param  {string} payload.employeeId  - Employee ID
- * @param  {string} payload.shift       - Current shift
- * @param  {number} payload.taste       - Rating 1–4
- * @param  {number} payload.freshness   - Rating 1–4
- * @param  {number} payload.portionSize - Rating 1–4
- * @param  {number} payload.appearance  - Rating 1–4
- * @returns {Promise<Object>} - Submission confirmation
- * @throws  {Error} - Enriched error with errorKey
+ * GET /feedback/getAllFoodAllocationList
+ * Returns food feedback questions (Taste, Freshness, Portion Size, Appearance).
  */
-export const submitFoodFeedback = async (payload) => {
-  if (!payload?.employeeId) {
-    throw new Error("employeeId is required for submitFoodFeedback");
-  }
-
-  if (import.meta.env.VITE_DEV_MODE === "true") {
-    await new Promise((r) => setTimeout(r, 600));
-    return { success: true, type: "food" };
-  }
-
-  const response = await axiosInstance.post("/feedback/food", payload);
-  return response.data;
+export const getFoodFeedbackQuestions = async () => {
+  const response = await axiosInstance.get(
+    "/feedback/getAllFoodAllocationList",
+  );
+  return response.data; // { statusCode, message, result: Question[] }
 };
 
-// ─── submitOverallFeedback ────────────────────────────────────────────────────
-
+// ─── getOverallFeedbackQuestions ──────────────────────────────────────────────
 /**
- * submitOverallFeedback — submit ratings for overall canteen experience.
- *
- * @param  {Object} payload
- * @param  {string} payload.employeeId         - Employee ID
- * @param  {number} payload.canteenCleanliness - Rating 1–4
- * @param  {number} payload.staffBehaviours    - Rating 1–4
- * @param  {number} payload.speedOfService     - Rating 1–4
- * @param  {number} payload.qualityOfFacilities - Rating 1–4
- * @returns {Promise<Object>} - Submission confirmation
- * @throws  {Error} - Enriched error with errorKey
+ * GET /feedback/getAllOverallAllocationList
+ * Returns overall feedback questions (Canteen Cleanliness, Staff Behaviour etc.).
  */
-export const submitOverallFeedback = async (payload) => {
-  if (!payload?.employeeId) {
-    throw new Error("employeeId is required for submitOverallFeedback");
-  }
+export const getOverallFeedbackQuestions = async () => {
+  const response = await axiosInstance.get(
+    "/feedback/getAllOverallAllocationList",
+  );
+  return response.data; // { statusCode, message, result: Question[] }
+};
 
-  if (import.meta.env.VITE_DEV_MODE === "true") {
-    await new Promise((r) => setTimeout(r, 600));
-    return { success: true, type: "overall" };
+// ─── getConsumedFoodForFeedback ───────────────────────────────────────────────
+/**
+ * GET /feedback/getEmpWiseConsumedFoodForFeedback/{empId}
+ * Returns meals consumed by the employee eligible for feedback.
+ * 403 = no meals found — returns empty result, NOT treated as an error.
+ */
+export const getConsumedFoodForFeedback = async (empId) => {
+  try {
+    const response = await axiosInstance.get(
+      `/feedback/getEmpWiseConsumedFoodForFeedback/${empId}`,
+    );
+    return response.data; // { statusCode: "200", message, result: Meal[] }
+  } catch (error) {
+    // 403 = "Food Feedback not found" — treat as empty, not a crash
+    if (
+      error?.response?.status === 403 ||
+      error?.response?.data?.statusCode === "403"
+    ) {
+      return {
+        statusCode: "403",
+        message: "Food Feedback not found...!",
+        result: [],
+      };
+    }
+    throw error;
   }
+};
 
-  const response = await axiosInstance.post("/feedback/overall", payload);
-  return response.data;
+// ─── saveFoodFeedback ─────────────────────────────────────────────────────────
+/**
+ * POST /feedback/SaveFeedBack
+ * Saves star ratings for ALL food feedback questions in one call.
+ *
+ * @param {Array<{ star: number, empId: number, menuId: number, questionId: number, bookingId: number }>} feedbackResponseList
+ */
+export const saveFoodFeedback = async (feedbackResponseList) => {
+  const response = await axiosInstance.post("/feedback/SaveFeedBack", {
+    feedbackResponseList,
+  });
+  return response.data; // { statusCode, message, result }
+};
+
+// ─── saveOverallFeedback ──────────────────────────────────────────────────────
+/**
+ * POST /feedback/saveOverallFeedBack
+ * Saves star ratings for ALL overall feedback questions in one call.
+ *
+ * @param {Array<{ star: number, empId: number, questionId: number, bookingId: number }>} feedbackResponseList
+ */
+export const saveOverallFeedback = async (feedbackResponseList) => {
+  const response = await axiosInstance.post("/feedback/saveOverallFeedBack", {
+    feedbackResponseList,
+  });
+  return response.data; // { statusCode, message, result }
 };

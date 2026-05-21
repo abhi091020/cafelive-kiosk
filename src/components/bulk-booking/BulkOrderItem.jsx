@@ -50,6 +50,7 @@ const BulkOrderItem = ({ item, onDelete, onQtyChange }) => {
             color: "#050404",
             fontWeight: 500,
             flex: 1,
+            fontFamily: "'Montserrat', sans-serif",
           }}
         >
           {item.name}
@@ -74,6 +75,7 @@ const BulkOrderItem = ({ item, onDelete, onQtyChange }) => {
               justifyContent: "center",
               userSelect: "none",
               transition: "border-color 0.2s, box-shadow 0.2s",
+              fontFamily: "'Montserrat', sans-serif",
             }}
             onMouseEnter={(e) => {
               e.currentTarget.style.borderColor = "#EA4D4E";
@@ -141,6 +143,7 @@ const BulkOrderItem = ({ item, onDelete, onQtyChange }) => {
                 fontSize: "clamp(1rem, 1.6vw, 1.25rem)",
                 fontWeight: 700,
                 color: "#050404",
+                fontFamily: "'Montserrat', sans-serif",
               }}
             >
               {item.name}
@@ -160,6 +163,7 @@ const BulkOrderItem = ({ item, onDelete, onQtyChange }) => {
                 fontWeight: 700,
                 color: padValue ? "#050404" : "#D1D5DB",
                 letterSpacing: "4px",
+                fontFamily: "'Montserrat', sans-serif",
               }}
             >
               {padValue || "—"}

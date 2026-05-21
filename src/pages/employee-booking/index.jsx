@@ -11,6 +11,7 @@ import NumPad from "@components/employee-booking/NumPad";
 import { useUser } from "@context/UserContext";
 import { ROUTES } from "@router/AppRouter";
 import { validateUser } from "@services/api/userAPI";
+import useScanner from "@hooks/useScanner";
 
 const EmployeeBookingPage = () => {
   const [employeeId, setEmployeeId] = useState("");
@@ -18,6 +19,10 @@ const EmployeeBookingPage = () => {
   const [error, setError] = useState(null);
   const { user } = useUser(); // ✅ only read — never overwrite staff session
   const navigate = useNavigate();
+
+  // ── Block all scanner/face-cam input on this page ──────────────────────────
+  // Numpad is always visible here — user must type manually only
+  useScanner({ onScan: () => {}, disabled: true });
 
   const handleSubmit = async () => {
     if (!employeeId) return;
@@ -30,13 +35,17 @@ const EmployeeBookingPage = () => {
 
       // ── Reject staff accounts ──────────────────────────────────────────
       if (result._message === "Valid staff") {
-        setError("Please enter an Employee ID.");
+        setError(
+          "Invalid UserID.....This User don't have permission to proceed further...!!!!",
+        );
         return;
       }
 
       // ── Reject contractor accounts ─────────────────────────────────────
       if (result._message === "Valid contractor") {
-        setError("Please enter an Employee ID.");
+        setError(
+          "Invalid UserID.....This User don't have permission to proceed further...!!!!",
+        );
         return;
       }
 
@@ -57,7 +66,9 @@ const EmployeeBookingPage = () => {
     } catch (err) {
       // Backend returns 500 for contractor IDs in this endpoint
       if (err.statusCode === "500") {
-        setError("Please enter an Employee ID.");
+        setError(
+          "Invalid UserID.....This User don't have permission to proceed further...!!!!",
+        );
       } else {
         setError(err.serverMessage ?? "Employee not found. Please try again.");
       }
@@ -84,6 +95,26 @@ const EmployeeBookingPage = () => {
       {/* ── BACK BUTTON ── */}
       <BackButton to="/staff-home" />
 
+      {/* ── ERROR MESSAGE — above the ID card ── */}
+      {error && (
+        <div
+          style={{
+            position: "absolute",
+            top: "16vh",
+            left: "50%",
+            transform: "translateX(-50%)",
+            zIndex: 6,
+            color: "#EA4D4E",
+            fontWeight: 600,
+            fontSize: "clamp(0.9rem, 1.4vw, 1.1rem)",
+            textAlign: "center",
+            whiteSpace: "nowrap",
+          }}
+        >
+          {error}
+        </div>
+      )}
+
       {/* ── ID CARD ── */}
       <div
         style={{
@@ -96,24 +127,6 @@ const EmployeeBookingPage = () => {
       >
         <EmployeeIdCard value={employeeId} />
       </div>
-
-      {/* ── ERROR MESSAGE ── */}
-      {error && (
-        <div
-          style={{
-            position: "absolute",
-            top: "30vh",
-            left: "50%",
-            transform: "translateX(-50%)",
-            zIndex: 6,
-            color: "#EA4D4E",
-            fontWeight: 600,
-            fontSize: "clamp(0.9rem, 1.4vw, 1.1rem)",
-          }}
-        >
-          {error}
-        </div>
-      )}
 
       {/* ── SUBMIT + CANCEL BUTTONS ── */}
       <div

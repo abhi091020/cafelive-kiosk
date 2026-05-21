@@ -49,6 +49,7 @@ const GuestActions = ({ canPrint, onPrint, onCancel, reqId }) => {
     borderRadius: "clamp(6px, 0.8vw, 10px)",
     fontSize: "clamp(2rem, 3.5vw, 2.8rem)",
     fontWeight: 600,
+    fontFamily: "'Montserrat', sans-serif",
     cursor: "pointer",
     outline: "none",
     WebkitTapHighlightColor: "transparent",

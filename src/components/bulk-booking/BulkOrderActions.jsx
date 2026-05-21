@@ -1,5 +1,7 @@
 // src/components/bulk-booking/BulkOrderActions.jsx
 
+import { useTranslation } from "react-i18next";
+
 const CartIcon = ({ color }) => (
   <svg width="36" height="36" viewBox="0 0 24 24" fill="none">
     <path
@@ -31,6 +33,8 @@ const CartIcon = ({ color }) => (
 const activeGradient = "linear-gradient(90deg, #EA4D4E 0%, #B91C1C 100%)";
 
 const BulkOrderActions = ({ isEnabled, onClick }) => {
+  const { t } = useTranslation();
+
   return (
     <button
       onClick={onClick}
@@ -77,9 +81,10 @@ const BulkOrderActions = ({ isEnabled, onClick }) => {
           fontSize: "2rem",
           fontWeight: 700,
           letterSpacing: "0.5px",
+          fontFamily: "'Montserrat', sans-serif",
         }}
       >
-        {isEnabled ? "BOOK MEAL" : "Select an item to Book Meal"}
+        {t("menu.bookMeal")}
       </span>
     </button>
   );

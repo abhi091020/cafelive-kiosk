@@ -99,10 +99,12 @@ const BookingErrorDialog = ({ message, onClose }) => {
             fontWeight: 700,
             color: "#050404",
             textAlign: "center",
+            fontFamily: "'Montserrat', sans-serif",
           }}
         >
           Booking Failed
         </p>
+
         <p
           style={{
             margin: 0,
@@ -110,6 +112,7 @@ const BookingErrorDialog = ({ message, onClose }) => {
             color: "#6B7280",
             textAlign: "center",
             lineHeight: 1.6,
+            fontFamily: "'Montserrat', sans-serif",
           }}
         >
           {message}
@@ -127,6 +130,7 @@ const BookingErrorDialog = ({ message, onClose }) => {
             fontWeight: 700,
             cursor: "pointer",
             boxShadow: "0 4px 14px rgba(234,77,78,0.35)",
+            fontFamily: "'Montserrat', sans-serif",
           }}
         >
           OK, Got It
@@ -144,7 +148,7 @@ const BulkBookingPage = () => {
   const bookingLockRef = useRef(false);
   const { user } = useUser();
   const { print } = usePrint();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
 
   // ── Back route: staff → staff-home, contractor → login ───────────────────
   const backTo = user?.userType === "staff" ? "/staff-home" : "/";
@@ -289,6 +293,7 @@ const BulkBookingPage = () => {
         items: selectedItems,
         print,
         bookingResult: response.result,
+        lang: i18n.language,
       });
 
       navigate("/order-success", {
@@ -393,6 +398,7 @@ const BulkBookingPage = () => {
                     fontSize: "1.75rem",
                     fontWeight: 700,
                     color: "#050404",
+                    fontFamily: "'Montserrat', sans-serif",
                   }}
                 >
                   {t("menu.myOrder")}
@@ -405,6 +411,7 @@ const BulkBookingPage = () => {
                     padding: "2px 12px",
                     fontSize: "1.15rem",
                     fontWeight: 700,
+                    fontFamily: "'Montserrat', sans-serif",
                   }}
                 >
                   {selectedItems.length}{" "}
@@ -418,6 +425,7 @@ const BulkBookingPage = () => {
                   fontSize: "clamp(0.85rem, 1.2vw, 1rem)",
                   fontWeight: 700,
                   color: "#EA4D4E",
+                  fontFamily: "'Montserrat', sans-serif",
                 }}
               >
                 {t("menu.enterQty")}

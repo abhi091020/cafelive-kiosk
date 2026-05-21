@@ -1,24 +1,16 @@
 // src/components/menu/BookOrderButton.jsx
 // Pure layout block — no absolute positioning, lives inside the bottom wrapper
 
-import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 
-const BookOrderButton = ({ selectedItems = [] }) => {
-  const navigate = useNavigate();
-  const isEnabled = selectedItems.length > 0;
-
+const BookOrderButton = ({ selectedItems = [], onClick, disabled }) => {
+  const { t } = useTranslation();
+  const isEnabled = selectedItems.length > 0 && !disabled;
   const activeGradient = "linear-gradient(90deg, #EA4D4E 0%, #B91C1C 100%)";
-
-  const handleBookMeal = () => {
-    if (!isEnabled) return;
-    setTimeout(() => {
-      navigate("/order-success", { state: { items: selectedItems } });
-    }, 150);
-  };
 
   return (
     <button
-      onClick={handleBookMeal}
+      onClick={isEnabled ? onClick : undefined}
       disabled={!isEnabled}
       style={{
         width: "100%",
@@ -55,13 +47,7 @@ const BookOrderButton = ({ selectedItems = [] }) => {
       }}
     >
       {/* Cart icon */}
-      <svg
-        width="28"
-        height="28"
-        viewBox="0 0 24 24"
-        fill="none"
-        xmlns="http://www.w3.org/2000/svg"
-      >
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
         <path
           d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"
           stroke={isEnabled ? "#fff" : "#9CA3AF"}
@@ -93,9 +79,10 @@ const BookOrderButton = ({ selectedItems = [] }) => {
           fontSize: "1.4rem",
           fontWeight: 700,
           letterSpacing: "0.5px",
+          fontFamily: "'Montserrat', sans-serif",
         }}
       >
-        {isEnabled ? "Book Meal" : "Select an item to Book Meal"}
+        {t("menu.bookMeal")}
       </span>
     </button>
   );

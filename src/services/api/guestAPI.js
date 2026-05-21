@@ -21,6 +21,30 @@ const toArray = (result) => {
 /**
  * getGuests — fetch all guest booking requests.
  * GET /guest/getAll
+ *
+ * Response shape per item:
+ * {
+ *   requestId: number,
+ *   guestDetails: {
+ *     name: string,
+ *     company: string,
+ *     coGuestCount: number,
+ *     mealDetails: Array<{
+ *       mealTpeName: string,   // e.g. "Meal,खाना,भोजन"
+ *       questQrCode: string,   // one QR code per meal slot
+ *       mealName: string,      // e.g. "Non-veg meal,मांसाहारी,मांसाहार"
+ *     }>
+ *   },
+ *   hostDetails: {
+ *     empName: string,
+ *     empCategory: string,
+ *     deptName: string,
+ *     branchName: string,
+ *   }
+ * }
+ *
+ * mealDetails is empty [] when QR codes have not yet been generated.
+ *
  * @returns {Promise<Array>}
  */
 export const getGuests = async () => {
@@ -46,7 +70,7 @@ export const searchGuests = async (name) => {
 
 /**
  * getGuestByRequestId — fetch all bookings for a given request ID.
- * A single requestId can have multiple bookings (e.g. guest + 2 companions).
+ * A single requestId can have multiple meal slots in mealDetails[].
  * GET /guest/search/:requestId
  * @param {string|number} requestId
  * @returns {Promise<Array>}
@@ -60,7 +84,7 @@ export const getGuestByRequestId = async (requestId) => {
 
 /**
  * confirmGuest — confirm a guest booking.
- * POST /guest/confirm
+ * POST /booking/createGuest
  * @param {{ requestId: string }} payload
  * @returns {Promise<Object>}
  */

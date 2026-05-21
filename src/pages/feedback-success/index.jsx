@@ -134,14 +134,14 @@ const FeedbackSuccessPage = () => {
           />
         </div>
 
-        {/* "Thank you!" — dynamic i18n text */}
+        {/* "Thank you!" */}
         <p
           style={{
             margin: 0,
             fontSize: "clamp(2rem, 5vw, 3.5rem)",
-            fontWeight: 800,
+            fontWeight: 600,
+            fontFamily: "'Poppins', sans-serif",
             color: "#B91C1C",
-            fontFamily: langFont,
             textAlign: "center",
             animation: "fadeUp 0.5s 0.25s ease both",
             zIndex: 1,
@@ -151,14 +151,14 @@ const FeedbackSuccessPage = () => {
           {t("feedback.feedbackSuccess")}
         </p>
 
-        {/* Subtitle — dynamic i18n text */}
+        {/* Subtitle */}
         <p
           style={{
             margin: 0,
             fontSize: "clamp(1.2rem, 3vw, 2rem)",
-            fontWeight: 700,
+            fontWeight: 600,
+            fontFamily: "'Poppins', sans-serif",
             color: "#B91C1C",
-            fontFamily: langFont,
             textAlign: "center",
             animation: "fadeUp 0.5s 0.35s ease both",
             zIndex: 1,
@@ -174,8 +174,9 @@ const FeedbackSuccessPage = () => {
           style={{
             margin: 0,
             fontSize: "1.05rem",
-            color: "#9CA3AF",
+            fontWeight: 600,
             fontFamily: "'Poppins', sans-serif",
+            color: "#9CA3AF",
             animation: "fadeUp 0.5s 0.45s ease both",
             zIndex: 1,
           }}
@@ -184,9 +185,9 @@ const FeedbackSuccessPage = () => {
           <span
             style={{
               color: "#B91C1C",
-              fontWeight: 700,
-              fontSize: "1.2rem",
+              fontWeight: 600,
               fontFamily: "'Poppins', sans-serif",
+              fontSize: "1.2rem",
               display: "inline-block",
               animation: "countPulse 1s ease infinite",
               minWidth: "22px",

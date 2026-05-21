@@ -7,8 +7,20 @@ import { useApp } from "@context/AppContext";
 //
 // Handles ticket printing silently.
 //
-// Production (Electron)  → window.electronAPI.silentPrint()  (hidden BrowserWindow, no dialog)
-// Dev (plain browser)    → hidden <iframe> + print()         (shows dialog — expected)
+// Production (Electron)  → window.electronAPI.silentPrint()
+//                          Uses hidden BrowserWindow in main.js.
+//                          Loads ticket HTML via temp file (file://) to avoid
+//                          data: URL size limits with base64 QR images.
+//                          Fully silent — no dialog shown to user.
+//
+// Dev (plain browser)    → hidden <iframe> + print()
+//                          Shows system print dialog — expected in dev.
+//
+// Printer                : POS58 Printer (58mm thermal roll)
+// pageSize               : { width: 58000, height: 297000 } — microns
+//                          width  = 58mm (full roll width)
+//                          height = 297mm (tall enough; thermal driver
+//                                  feeds only what's needed and auto-cuts)
 //
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -17,10 +29,10 @@ const usePrint = () => {
   const [isPrinting, setIsPrinting] = useState(false);
 
   /**
-   * print — send HTML content to the printer silently.
+   * print — send HTML ticket content to the printer.
    *
    * @param  {Object} options
-   * @param  {string} options.html - Ticket HTML string built by ticketBuilder
+   * @param  {string} options.html - Ticket HTML string from ticketBuilder
    * @returns {Promise<void>}
    */
   const print = useCallback(
@@ -35,16 +47,24 @@ const usePrint = () => {
         setIsPrinting(true);
 
         try {
-          // ── Production: Electron silent print via hidden BrowserWindow ──────
-          // Uses ipcMain handler "silent-print" in electron/main.js which
-          // loads the ticket HTML into an invisible window and prints only that.
+          // ── Production: Electron silent print via IPC ─────────────────────
+          // Calls ipcMain "silent-print" handler in electron/main.js which:
+          //   1. Writes HTML to OS temp file
+          //   2. Loads it in a hidden BrowserWindow via file://
+          //   3. Waits for QR image to decode + forces compositor paint
+          //   4. Prints silently to POS58 Printer at 58mm
+          //   5. Deletes temp file
           const isElectron = Boolean(window?.electronAPI?.silentPrint);
 
           if (isElectron) {
             window.electronAPI
               .silentPrint({
                 html,
-                pageSize: "A4", // change to thermal size if needed e.g. { width: 72, height: 200 }
+                // POS58 Printer: 58mm wide roll (in microns)
+                // height 297000 = 297mm — tall enough for any receipt;
+                // thermal driver feeds as needed and auto-cuts.
+                // Must match: ticketBuilder @page CSS + main.js BrowserWindow
+                pageSize: { width: 48000, height: 297000 }, // ← was undefined
                 copies: 1,
               })
               .then(resolve)
@@ -59,7 +79,9 @@ const usePrint = () => {
           }
 
           // ── Dev / Browser fallback: hidden iframe print ───────────────────
-          // Shows the browser print dialog in dev — that's expected behaviour.
+          // Opens the browser print dialog — that is expected behaviour in dev.
+          // NOTE: This will NOT print silently on POS58 Printer from a browser.
+          //       Use Electron for production printing.
           console.log("[usePrint] Browser fallback — using hidden iframe");
 
           const iframe = document.createElement("iframe");
@@ -84,7 +106,7 @@ const usePrint = () => {
               console.error("[usePrint] iframe print failed:", err);
               showNotification({ message: "printerError", type: "error" });
             } finally {
-              // Small delay so the print job is queued before iframe is removed
+              // Small delay so print job is queued before iframe is removed
               setTimeout(() => {
                 document.body.removeChild(iframe);
                 setIsPrinting(false);

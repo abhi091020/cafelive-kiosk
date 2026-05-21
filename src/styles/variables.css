@@ -40,6 +40,7 @@
   /* ── Typography ───────────────────────────────────────────────────────── */
   --font-family: "Inter", "Segoe UI", Arial, sans-serif;
   --font-family-mono: "Courier New", monospace;
+  --font-family-buttons: "Montserrat", "Inter", sans-serif; /* ← all buttons */
 
   --font-xs: clamp(0.75rem, 1.5vw, 0.875rem); /* 12–14px */
   --font-sm: clamp(0.875rem, 2vw, 1rem); /* 14–16px */

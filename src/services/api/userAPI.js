@@ -62,7 +62,11 @@ export const validateUser = async (enrollId) => {
 
     // ── Attach message to result so UserContext & LoginPage can use it ─────
     // message will be one of: "Valid employee" | "Valid contractor" | "Valid staff"
-    return { ...result, _message: message };
+    return {
+      ...result,
+      _message: message,
+      _enrollId: String(parseInt(enrollId, 10)),
+    };
   } catch (err) {
     // Already a pre-built error — re-throw as-is
     if (err.serverMessage) throw err;

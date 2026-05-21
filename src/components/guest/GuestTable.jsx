@@ -102,6 +102,7 @@ const GuestTable = ({
           white-space: nowrap;
           overflow: hidden;
           text-overflow: ellipsis;
+          font-family: 'Montserrat', sans-serif;
         }
 
         .guest-table-row {
@@ -125,6 +126,7 @@ const GuestTable = ({
           color: #570000;
           font-size: clamp(18px, 2.2vw, 28px);
           font-weight: 500;
+          font-family: 'Montserrat', sans-serif;
         }
 
         .guest-td-primary {
@@ -134,6 +136,7 @@ const GuestTable = ({
           white-space: nowrap;
           overflow: hidden;
           text-overflow: ellipsis;
+          font-family: 'Montserrat', sans-serif;
         }
 
         .guest-td-col {
@@ -145,11 +148,12 @@ const GuestTable = ({
 
         .guest-td-secondary {
           color: #999999;
-          font-size: clamp(13px, 1.4vw, 17px);
+          font-size: clamp(16px, 1.9vw, 24px);
           font-weight: 400;
           white-space: nowrap;
           overflow: hidden;
           text-overflow: ellipsis;
+          font-family: 'Montserrat', sans-serif;  /* ← add */
         }
 
         .guest-table-empty {
@@ -158,6 +162,7 @@ const GuestTable = ({
           color: #999999;
           font-size: clamp(14px, 1.5vw, 18px);
           background: #fff;
+          font-family: 'Montserrat', sans-serif;  /* ← add */
         }
       `}</style>
     </>

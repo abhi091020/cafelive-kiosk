@@ -13,7 +13,9 @@ import { BookOrderCard } from "@components/menu";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useUser } from "@context/UserContext";
 import { useTranslation } from "react-i18next";
+import usePrint from "@hooks/usePrint";
 import { bookOrder } from "@services/api/orderAPI";
+import { createAndPrintTicket } from "@services/print/printService";
 
 // ─── Icons ────────────────────────────────────────────────────────────────────
 const TrashIcon = () => (
@@ -121,9 +123,10 @@ const ShiftAlertDialog = ({ visible, onClose }) => {
           style={{
             margin: 0,
             fontSize: "1.3rem",
-            fontWeight: 700,
+            fontWeight: 500,
             color: "#050404",
             textAlign: "center",
+            fontFamily: "'Montserrat', sans-serif",
           }}
         >
           {t("shift.pleaseSelectShift")}
@@ -134,6 +137,8 @@ const ShiftAlertDialog = ({ visible, onClose }) => {
             fontSize: "1rem",
             color: "#6B7280",
             textAlign: "center",
+            fontFamily: "'Montserrat', sans-serif",
+            fontWeight: 500,
           }}
         >
           {t("shift.mustSelectShift")}
@@ -148,9 +153,10 @@ const ShiftAlertDialog = ({ visible, onClose }) => {
             border: "none",
             borderRadius: "10px",
             fontSize: "1.05rem",
-            fontWeight: 700,
+            fontWeight: 500,
             cursor: "pointer",
             boxShadow: "0 4px 14px rgba(234,77,78,0.35)",
+            fontFamily: "'Montserrat', sans-serif",
           }}
         >
           {t("shift.okGotIt")}
@@ -217,9 +223,10 @@ const BookingErrorDialog = ({ message, onClose }) => {
           style={{
             margin: 0,
             fontSize: "1.3rem",
-            fontWeight: 700,
+            fontWeight: 500,
             color: "#050404",
             textAlign: "center",
+            fontFamily: "'Montserrat', sans-serif",
           }}
         >
           Booking Failed
@@ -231,6 +238,8 @@ const BookingErrorDialog = ({ message, onClose }) => {
             color: "#6B7280",
             textAlign: "center",
             lineHeight: 1.6,
+            fontFamily: "'Montserrat', sans-serif",
+            fontWeight: 500,
           }}
         >
           {message}
@@ -245,9 +254,10 @@ const BookingErrorDialog = ({ message, onClose }) => {
             border: "none",
             borderRadius: "10px",
             fontSize: "1.05rem",
-            fontWeight: 700,
+            fontWeight: 500,
             cursor: "pointer",
             boxShadow: "0 4px 14px rgba(234,77,78,0.35)",
+            fontFamily: "'Montserrat', sans-serif",
           }}
         >
           OK, Got It
@@ -265,19 +275,16 @@ const MenuPage = () => {
   const bookingLockRef = useRef(false);
   const { user } = useUser();
   const { t, i18n } = useTranslation();
+  const { print } = usePrint();
   const lang = i18n.language;
 
-  // ── staffId + bookedEmployee from route state (set by EmployeeBookingPage) ──
   const staffId = location.state?.staffId ?? null;
   const bookedEmployee = location.state?.bookedEmployee ?? null;
 
-  // ── If staff booked for an employee, use that employee's ID for the order ──
-  // ── Otherwise use the logged-in user's own employeeId ─────────────────────
   const activeEmployeeId = bookedEmployee
     ? String(bookedEmployee.empId)
     : user.employeeId;
 
-  // ── Back route: staff flow → /employee-booking, employee flow → /home ──────
   const backTo = staffId ? "/employee-booking" : "/home";
 
   const [selectedItems, setSelectedItems] = useState([]);
@@ -349,13 +356,17 @@ const MenuPage = () => {
     setShowDialog(true);
   };
 
-  // ── Yes = confirm & book order ────────────────────────────────────────────
   const handleConfirmYes = async () => {
     if (bookingLockRef.current) return;
     bookingLockRef.current = true;
 
     setShowDialog(false);
     setIsBooking(true);
+
+    const printableItems = selectedItems.map((i) => ({
+      ...i,
+      name: getItemName(i),
+    }));
 
     let bookingResult = null;
 
@@ -382,25 +393,32 @@ const MenuPage = () => {
       return;
     }
 
+    try {
+      await createAndPrintTicket({
+        user: bookedEmployee ?? user,
+        items: printableItems,
+        shift: shift?.shiftName,
+        print,
+        bookingResult,
+        lang,
+      });
+    } catch (err) {
+      console.error("[MenuPage] Print error:", err);
+    }
+
     setIsBooking(false);
     bookingLockRef.current = false;
 
-    setTimeout(() => {
-      navigate("/order-success", {
-        state: {
-          user: bookedEmployee ?? user,
-          items: selectedItems.map((i) => ({
-            ...i,
-            name: getItemName(i),
-          })),
-          shift: shift?.shiftName,
-          bookingResult,
-        },
-      });
-    }, 150);
+    navigate("/order-success", {
+      state: {
+        user: bookedEmployee ?? user,
+        items: printableItems,
+        shift: shift?.shiftName,
+        bookingResult,
+      },
+    });
   };
 
-  // ── No = close dialog, go back to menu ───────────────────────────────────
   const handleConfirmNo = () => setShowDialog(false);
 
   const DOT_COUNT = Math.min(selectedItems.length, 5);
@@ -430,13 +448,8 @@ const MenuPage = () => {
         `}</style>
 
       <Header />
-
-      {/* ── BACK BUTTON — staff flow → /employee-booking, else → /home ── */}
       <BackButton to={backTo} />
-
-      {/* ── Shows booked employee name when staff books, else logged-in user ── */}
       <UserWelcome overrideUser={bookedEmployee} />
-
       <DateTimeDisplay />
 
       <BookOrderCard
@@ -475,8 +488,9 @@ const MenuPage = () => {
                 style={{
                   margin: 0,
                   fontSize: "1.75rem",
-                  fontWeight: 700,
+                  fontWeight: 500,
                   color: "#050404",
+                  fontFamily: "'Montserrat', sans-serif",
                 }}
               >
                 {t("menu.myOrder")}
@@ -488,7 +502,8 @@ const MenuPage = () => {
                   borderRadius: "20px",
                   padding: "2px 12px",
                   fontSize: "1.15rem",
-                  fontWeight: 700,
+                  fontWeight: 500,
+                  fontFamily: "'Montserrat', sans-serif",
                 }}
               >
                 {selectedItems.length}{" "}
@@ -559,6 +574,7 @@ const MenuPage = () => {
                         color: "#050404",
                         fontWeight: 500,
                         flex: 1,
+                        fontFamily: "'Montserrat', sans-serif",
                       }}
                     >
                       {getItemName(item)}
@@ -581,13 +597,14 @@ const MenuPage = () => {
                           backgroundColor: "#079A3F",
                           color: "#fff",
                           fontSize: "1.6rem",
-                          fontWeight: 700,
+                          fontWeight: 500,
                           cursor: "pointer",
                           display: "flex",
                           alignItems: "center",
                           justifyContent: "center",
                           flexShrink: 0,
                           lineHeight: 1,
+                          fontFamily: "'Montserrat', sans-serif",
                         }}
                       >
                         −
@@ -598,8 +615,9 @@ const MenuPage = () => {
                           minWidth: "32px",
                           textAlign: "center",
                           fontSize: "1.35rem",
-                          fontWeight: 700,
+                          fontWeight: 500,
                           color: "#050404",
+                          fontFamily: "'Montserrat', sans-serif",
                         }}
                       >
                         {item.quantity}
@@ -615,13 +633,14 @@ const MenuPage = () => {
                           backgroundColor: "#EA4D4E",
                           color: "#fff",
                           fontSize: "1.6rem",
-                          fontWeight: 700,
+                          fontWeight: 500,
                           cursor: "pointer",
                           display: "flex",
                           alignItems: "center",
                           justifyContent: "center",
                           flexShrink: 0,
                           lineHeight: 1,
+                          fontFamily: "'Montserrat', sans-serif",
                         }}
                       >
                         +
@@ -725,22 +744,18 @@ const MenuPage = () => {
             style={{
               color: isEnabled && !isBooking ? "#FFFFFF" : "#9CA3AF",
               fontSize: "2rem",
-              fontWeight: 700,
+              fontWeight: 500,
               letterSpacing: "0.5px",
+              fontFamily: "'Montserrat', sans-serif",
             }}
           >
-            {isBooking
-              ? t("general.loading")
-              : isEnabled
-                ? t("menu.bookMeal")
-                : t("menu.selectItemToBook")}
+            {isBooking ? t("general.loading") : t("menu.bookMeal")}
           </span>
         </button>
       </div>
 
       <Footer />
 
-      {/* ── Yes = confirm booking, No = go back to menu ── */}
       <ConfirmDialog
         visible={showDialog}
         message={t("menu.confirmOrder")}

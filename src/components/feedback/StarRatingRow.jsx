@@ -2,19 +2,6 @@
 
 import { useState } from "react";
 
-/**
- * StarRatingRow
- * ─────────────
- * Fully flex-based row: bullet + label take available space,
- * stars are pinned to the right. No absolute positioning —
- * long labels (e.g. "Canteen Cleanliness") can never overlap stars.
- *
- * Kiosk notes:
- *  • min touch target per star: 48px (WCAG 2.5.5 / Material guideline)
- *  • pointer events used (works for both mouse + touch)
- *  • userSelect / WebkitTapHighlightColor suppressed
- */
-
 const StarRatingRow = ({ label, value = 0, onChange, isLast = false }) => {
   const [hover, setHover] = useState(0);
 
@@ -30,26 +17,28 @@ const StarRatingRow = ({ label, value = 0, onChange, isLast = false }) => {
         gap: "clamp(8px, 1.2vw, 20px)",
       }}
     >
-      {/* ── Bullet ─────────────────────────────────────────────── */}
+      {/* Bullet */}
       <span
         style={{
           flexShrink: 0,
           color: "#1a1a1a",
           fontSize: "clamp(14px, 1.8vw, 24px)",
+          fontFamily: "'Montserrat', sans-serif",
           lineHeight: 1,
         }}
       >
         •
       </span>
 
-      {/* ── Label ──────────────────────────────────────────────── */}
+      {/* Label */}
       <span
         style={{
           flex: 1,
-          minWidth: 0, // critical: allows flex shrink below content size
+          minWidth: 0,
           color: "#1a1a1a",
           fontSize: "clamp(14px, 1.9vw, 26px)",
-          fontWeight: 500,
+          fontWeight: 600,
+          fontFamily: "'Montserrat', sans-serif",
           letterSpacing: "0.2px",
           lineHeight: 1.3,
           whiteSpace: "nowrap",
@@ -60,7 +49,7 @@ const StarRatingRow = ({ label, value = 0, onChange, isLast = false }) => {
         {label}
       </span>
 
-      {/* ── Stars ──────────────────────────────────────────────── */}
+      {/* Stars */}
       <div
         style={{
           flexShrink: 0,
@@ -77,7 +66,6 @@ const StarRatingRow = ({ label, value = 0, onChange, isLast = false }) => {
             onPointerEnter={() => setHover(star)}
             onPointerLeave={() => setHover(0)}
             style={{
-              // 48px min touch target for kiosk / WCAG
               display: "inline-flex",
               alignItems: "center",
               justifyContent: "center",

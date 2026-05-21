@@ -26,6 +26,7 @@ export const UserProvider = ({ children }) => {
       ? {
           id: String(userData.canteenStaffId ?? ""),
           employeeId: String(userData.canteenStaffId ?? ""),
+          enrollId: userData._enrollId ?? "",
           name: userData.staffName ?? "Staff",
           designation: userData.designation ?? "—",
           department: "—",
@@ -40,6 +41,7 @@ export const UserProvider = ({ children }) => {
         ? {
             id: String(userData.empId ?? ""),
             employeeId: String(userData.empId ?? ""),
+            enrollId: userData._enrollId ?? "",
             name: userData.empName ?? "Contractor",
             designation: userData.designation ?? "",
             department: userData.deptName ?? "—",
@@ -54,6 +56,7 @@ export const UserProvider = ({ children }) => {
             // isEmployee (default fallback)
             id: String(userData.empId ?? ""),
             employeeId: String(userData.empId ?? ""),
+            enrollId: userData._enrollId ?? "",
             name: userData.empName ?? "Employee",
             designation: userData.designation ?? "",
             department: userData.deptName ?? "—",

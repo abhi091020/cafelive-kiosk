@@ -9,8 +9,10 @@ const InfoBox = ({
   setRatings,
   onSubmit,
   onCancel,
+  isSubmitting = false,
   mealName,
   mealItems,
+  validationMsg = "",
 }) => {
   const { t } = useTranslation();
 
@@ -27,7 +29,7 @@ const InfoBox = ({
         overflow: "hidden",
       }}
     >
-      {/* ── Meal Section (Food only) ─────────────────────────────── */}
+      {/* ── Meal Section ─────────────────────────────────────── */}
       {(mealName || mealItems) && (
         <div
           style={{
@@ -45,6 +47,7 @@ const InfoBox = ({
                 WebkitTextFillColor: "transparent",
                 fontSize: "clamp(15px, 2.2vw, 28px)",
                 fontWeight: 600,
+                fontFamily: "'Montserrat', sans-serif",
                 letterSpacing: "0.2px",
                 lineHeight: 1.3,
               }}
@@ -59,7 +62,8 @@ const InfoBox = ({
                 color: "#333333",
                 fontSize: "clamp(12px, 1.7vw, 22px)",
                 lineHeight: 1.5,
-                fontWeight: 400,
+                fontWeight: 600,
+                fontFamily: "'Montserrat', sans-serif",
               }}
             >
               {mealItems}
@@ -74,7 +78,7 @@ const InfoBox = ({
           <StarRatingRow
             key={key}
             label={label}
-            value={ratings[key]}
+            value={ratings[key] ?? 0}
             onChange={(val) => handleChange(key, val)}
             isLast={index === categories.length - 1}
           />
@@ -94,67 +98,80 @@ const InfoBox = ({
         {/* Submit */}
         <button
           onClick={onSubmit}
+          disabled={isSubmitting}
           style={{
             minWidth: "clamp(100px, 16vw, 210px)",
             height: "clamp(36px, 4vh, 64px)",
             borderRadius: "clamp(4px, 0.5vw, 8px)",
             border: "none",
-            background: "#EA4D4E",
+            background: isSubmitting ? "#f0a0a0" : "#EA4D4E",
             color: "#FFFFFF",
             fontSize: "clamp(13px, 1.8vw, 22px)",
             fontWeight: 600,
-            cursor: "pointer",
+            fontFamily: "'Montserrat', sans-serif",
+            cursor: isSubmitting ? "not-allowed" : "pointer",
             letterSpacing: "0.3px",
             transition: "opacity 0.15s ease, transform 0.1s ease",
             WebkitTapHighlightColor: "transparent",
           }}
           onPointerDown={(e) => {
+            if (isSubmitting) return;
             e.currentTarget.style.opacity = "0.85";
             e.currentTarget.style.transform = "scale(0.98)";
             e.currentTarget.style.background = "#CB0000";
           }}
           onPointerUp={(e) => {
+            if (isSubmitting) return;
             e.currentTarget.style.opacity = "1";
             e.currentTarget.style.transform = "scale(1)";
             e.currentTarget.style.background = "#EA4D4E";
           }}
           onPointerLeave={(e) => {
+            if (isSubmitting) return;
             e.currentTarget.style.opacity = "1";
             e.currentTarget.style.transform = "scale(1)";
             e.currentTarget.style.background = "#EA4D4E";
           }}
         >
-          {t("feedback.submitFeedback")}
+          {isSubmitting
+            ? t("general.loading") || "Submitting…"
+            : t("feedback.submitFeedback")}
         </button>
 
         {/* Cancel */}
         <button
-          onClick={onCancel}
+          onClick={isSubmitting ? undefined : onCancel}
+          disabled={isSubmitting}
           style={{
             minWidth: "clamp(100px, 16vw, 210px)",
             height: "clamp(36px, 4vh, 64px)",
             borderRadius: "clamp(4px, 0.5vw, 8px)",
             border: "clamp(1px, 0.12vw, 2px) solid #EA4D4E",
             background: "transparent",
-            color: "#EA4D4E",
+            color: isSubmitting ? "#ccc" : "#EA4D4E",
+            borderColor: isSubmitting ? "#ccc" : "#EA4D4E",
             fontSize: "clamp(13px, 1.8vw, 22px)",
             fontWeight: 600,
-            cursor: "pointer",
+            fontFamily: "'Montserrat', sans-serif",
+            cursor: isSubmitting ? "not-allowed" : "pointer",
             letterSpacing: "0.3px",
             transition: "opacity 0.15s ease, transform 0.1s ease",
             WebkitTapHighlightColor: "transparent",
           }}
           onPointerDown={(e) => {
+            if (isSubmitting) return;
             e.currentTarget.style.opacity = "0.7";
             e.currentTarget.style.transform = "scale(0.98)";
             e.currentTarget.style.background = "#FEE2E2";
           }}
           onPointerUp={(e) => {
+            if (isSubmitting) return;
             e.currentTarget.style.opacity = "1";
             e.currentTarget.style.transform = "scale(1)";
             e.currentTarget.style.background = "transparent";
           }}
           onPointerLeave={(e) => {
+            if (isSubmitting) return;
             e.currentTarget.style.opacity = "1";
             e.currentTarget.style.transform = "scale(1)";
             e.currentTarget.style.background = "transparent";
@@ -163,6 +180,40 @@ const InfoBox = ({
           {t("general.cancel")}
         </button>
       </div>
+
+      {/* ── Validation Message ───────────────────────────────────── */}
+      {validationMsg ? (
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "clamp(6px, 0.8vw, 12px)",
+            padding: "clamp(10px, 1.2vh, 20px) clamp(16px, 2.5vw, 40px)",
+            background: "#FFF5F5",
+            borderTop: "1px solid rgba(234, 77, 78, 0.2)",
+          }}
+        >
+          <span
+            style={{
+              flexShrink: 0,
+              fontSize: "clamp(16px, 2vw, 26px)",
+              color: "#EA4D4E",
+            }}
+          >
+            ⚠
+          </span>
+          <span
+            style={{
+              color: "#EA4D4E",
+              fontSize: "clamp(13px, 1.8vw, 22px)",
+              fontWeight: 600,
+              fontFamily: "'Montserrat', sans-serif",
+            }}
+          >
+            {validationMsg}
+          </span>
+        </div>
+      ) : null}
     </div>
   );
 };

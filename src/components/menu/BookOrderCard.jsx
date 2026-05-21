@@ -148,6 +148,9 @@ const BookOrderCard = ({
         boxShadow: "0 2px 16px rgba(0,0,0,0.07)",
         zIndex: 10,
         overflow: "visible",
+        fontFamily: "'Montserrat', sans-serif",
+        fontWeight: 500,
+        fontStyle: "normal",
       }}
     >
       <style>{`
@@ -170,7 +173,9 @@ const BookOrderCard = ({
         <span
           style={{
             color: "#B91C1C",
-            fontWeight: 700,
+            fontFamily: "'Montserrat', sans-serif",
+            fontWeight: 600,
+            fontStyle: "normal",
             fontSize: "clamp(1rem, 1.8vw, 1.4rem)",
           }}
         >
@@ -178,7 +183,15 @@ const BookOrderCard = ({
         </span>
 
         {shiftsLoading && (
-          <div style={{ color: "#9CA3AF", fontSize: "0.95rem" }}>
+          <div
+            style={{
+              color: "#9CA3AF",
+              fontFamily: "'Montserrat', sans-serif",
+              fontWeight: 500,
+              fontStyle: "normal",
+              fontSize: "0.95rem",
+            }}
+          >
             Loading shifts...
           </div>
         )}
@@ -187,8 +200,10 @@ const BookOrderCard = ({
           <div
             style={{
               color: "#B91C1C",
+              fontFamily: "'Montserrat', sans-serif",
+              fontWeight: 500,
+              fontStyle: "normal",
               fontSize: "0.9rem",
-              fontWeight: 600,
               padding: "6px 14px",
               border: "1.5px solid #FECACA",
               borderRadius: "8px",
@@ -221,7 +236,9 @@ const BookOrderCard = ({
                 borderRadius: "20px",
                 background: "#F0FDF4",
                 color: "#079A3F",
+                fontFamily: "'Montserrat', sans-serif",
                 fontWeight: 500,
+                fontStyle: "normal",
                 fontSize: "clamp(0.8rem, 1.2vw, 1rem)",
                 cursor: "pointer",
                 whiteSpace: "nowrap",
@@ -269,7 +286,9 @@ const BookOrderCard = ({
                             : "transparent",
                         color:
                           s.shiftId === shift.shiftId ? "#B91C1C" : "#374151",
+                        fontFamily: "'Montserrat', sans-serif",
                         fontWeight: s.shiftId === shift.shiftId ? 600 : 500,
+                        fontStyle: "normal",
                         fontSize: "clamp(1.3rem, 2vw, 1.8rem)",
                         border: "none",
                         cursor: "pointer",
@@ -372,7 +391,9 @@ const BookOrderCard = ({
                     <p
                       style={{
                         fontSize: "clamp(1.5rem, 2.4vw, 2.1rem)",
-                        fontWeight: activeCategory === cat.key ? 700 : 500,
+                        fontFamily: "'Montserrat', sans-serif",
+                        fontWeight: activeCategory === cat.key ? 600 : 500,
+                        fontStyle: "normal",
                         color:
                           activeCategory === cat.key ? "#B91C1C" : "#1F2937",
                         margin: cat.categoryImage ? "8px 0 0 0" : "0",
@@ -408,7 +429,15 @@ const BookOrderCard = ({
                 height: ROW_HEIGHT,
               }}
             >
-              <p style={{ color: "#9CA3AF", fontSize: "1.1rem" }}>
+              <p
+                style={{
+                  color: "#9CA3AF",
+                  fontFamily: "'Montserrat', sans-serif",
+                  fontWeight: 500,
+                  fontStyle: "normal",
+                  fontSize: "1.1rem",
+                }}
+              >
                 Loading menu...
               </p>
             </div>
@@ -427,8 +456,10 @@ const BookOrderCard = ({
               <p
                 style={{
                   margin: 0,
+                  fontFamily: "'Montserrat', sans-serif",
+                  fontWeight: 500,
+                  fontStyle: "normal",
                   fontSize: "1.2rem",
-                  fontWeight: 600,
                   color: "#B91C1C",
                   textAlign: "center",
                   lineHeight: 1.6,
@@ -449,7 +480,15 @@ const BookOrderCard = ({
                 height: ROW_HEIGHT,
               }}
             >
-              <p style={{ color: "#9CA3AF", fontSize: "1.1rem" }}>
+              <p
+                style={{
+                  color: "#9CA3AF",
+                  fontFamily: "'Montserrat', sans-serif",
+                  fontWeight: 500,
+                  fontStyle: "normal",
+                  fontSize: "1.1rem",
+                }}
+              >
                 No items available for today
               </p>
             </div>
@@ -508,8 +547,10 @@ const BookOrderCard = ({
                       <p
                         style={{
                           margin: "0 0 6px 0",
+                          fontFamily: "'Montserrat', sans-serif",
+                          fontWeight: 600,
+                          fontStyle: "normal",
                           fontSize: "clamp(1.6rem, 2.6vw, 2.2rem)",
-                          fontWeight: 700,
                           color: isSelected ? "#B91C1C" : "#A50000",
                           lineHeight: 1.3,
                         }}
@@ -521,9 +562,11 @@ const BookOrderCard = ({
                         <p
                           style={{
                             margin: 0,
+                            fontFamily: "'Montserrat', sans-serif",
+                            fontWeight: 500,
+                            fontStyle: "normal",
                             fontSize: "clamp(1.05rem, 1.6vw, 1.4rem)",
                             color: "#6B7280",
-                            fontWeight: 400,
                             lineHeight: 1.4,
                             overflow: "hidden",
                             display: "-webkit-box",
@@ -552,8 +595,10 @@ const BookOrderCard = ({
                         <span
                           style={{
                             color: "#fff",
+                            fontFamily: "'Montserrat', sans-serif",
+                            fontWeight: 500,
+                            fontStyle: "normal",
                             fontSize: "13px",
-                            fontWeight: 700,
                           }}
                         >
                           ✓

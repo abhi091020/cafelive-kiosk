@@ -15,6 +15,7 @@ const FeedbackButtons = () => {
     borderRadius: "clamp(6px, 8px, 10px)",
     fontSize: "clamp(2rem, 3.5vw, 2.8rem)",
     fontWeight: 600,
+    fontFamily: "'Poppins', sans-serif",
     color: "#FFFFFF",
     cursor: "pointer",
     outline: "none",
@@ -49,7 +50,6 @@ const FeedbackButtons = () => {
         gap: "clamp(0.8vh, 1.0vh, 1.5vh)",
       }}
     >
-      {/* Food Feedback Button */}
       <button
         onClick={() => navigate(ROUTES.FEEDBACK_FOOD)}
         style={{ ...buttonStyle, backgroundColor: "#EA4D4E" }}
@@ -60,7 +60,6 @@ const FeedbackButtons = () => {
         {t("feedback.foodFeedback")}
       </button>
 
-      {/* Overall Feedback Button */}
       <button
         onClick={() => navigate(ROUTES.FEEDBACK_OVERALL)}
         style={{ ...buttonStyle, backgroundColor: "#EA4D4E" }}

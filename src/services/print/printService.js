@@ -6,9 +6,18 @@ import {
   buildBulkTicketHtml,
 } from "./ticketBuilder";
 
-// ─── Helper: resolve item name from any field shape ───────────────────────────
-const resolveItemName = (item) =>
+// ─── Name resolvers ───────────────────────────────────────────────────────────
+
+// Always returns English name — used for coupon-type keyword detection
+const resolveEnglishName = (item) =>
   item?.nameEn ?? item?.name ?? item?.menuEnglishName ?? "Item";
+
+// Returns the name in the selected language — used for on-ticket display
+const resolveLocalizedName = (item, lang) => {
+  if (lang === "hi" && item?.nameHi) return item.nameHi;
+  if (lang === "mr" && item?.nameMr) return item.nameMr;
+  return item?.nameEn ?? item?.name ?? item?.menuEnglishName ?? "Item";
+};
 
 // ─── createAndPrintTicket (Employee) ─────────────────────────────────────────
 export const createAndPrintTicket = async ({
@@ -16,8 +25,8 @@ export const createAndPrintTicket = async ({
   items,
   shift,
   print,
-  qrCodeNumber,
   bookingResult,
+  lang = "en",
 }) => {
   try {
     const expandedItems = [];
@@ -28,7 +37,8 @@ export const createAndPrintTicket = async ({
           (i) => String(i.id) === String(booking.menuId),
         );
         expandedItems.push({
-          itemName: resolveItemName(matchedItem),
+          itemName: resolveEnglishName(matchedItem),
+          itemNameLocalized: resolveLocalizedName(matchedItem, lang),
           qrCodeNumber: booking.qrCodeNumber,
         });
       }
@@ -36,20 +46,38 @@ export const createAndPrintTicket = async ({
       for (const item of items) {
         const qty = Number(item.quantity) || 1;
         for (let i = 0; i < qty; i++) {
-          expandedItems.push({ itemName: resolveItemName(item), qrCodeNumber });
+          expandedItems.push({
+            itemName: resolveEnglishName(item),
+            itemNameLocalized: resolveLocalizedName(item, lang),
+            qrCodeNumber: undefined,
+          });
         }
       }
     }
 
-    console.log(`[printService] Printing ${expandedItems.length} ticket(s)`);
+    console.log(
+      `[printService] Building ${expandedItems.length} ticket(s) in parallel [lang: ${lang}]`,
+    );
 
-    for (const { itemName, qrCodeNumber: qr } of expandedItems) {
-      const html = await buildSingleItemTicketHtml({
-        user,
-        itemName,
-        shift,
-        qrCodeNumber: qr,
-      });
+    // OPTIMISATION: Build all ticket HTMLs in parallel (QR generation is async
+    // and CPU-bound — no reason to wait for ticket N before starting ticket N+1).
+    // Printer still receives jobs one at a time (sequential print loop below).
+    const htmlList = await Promise.all(
+      expandedItems.map(({ itemName, itemNameLocalized, qrCodeNumber }) =>
+        buildSingleItemTicketHtml({
+          user,
+          itemName,
+          itemNameLocalized,
+          shift,
+          qrCodeNumber,
+          lang,
+        }),
+      ),
+    );
+
+    console.log(`[printService] Printing ${htmlList.length} ticket(s)...`);
+
+    for (const html of htmlList) {
       await print({ html });
     }
 
@@ -65,40 +93,56 @@ export const createAndPrintGuestTicket = async ({
   guestDetails,
   hostDetails,
   print,
+  lang = "en",
 }) => {
-  try {
-    const qrCodes = guestDetails?.questQrCodes ?? [];
+  const mealDetails = guestDetails?.mealDetails ?? [];
 
-    // If backend already generated QR codes → print one ticket per QR code
-    // Fallback → print 1 + coGuestCount tickets using requestId as QR value
-    const tickets =
-      qrCodes.length > 0
-        ? qrCodes.map((qr) => ({ qrCodeNumber: String(qr) }))
-        : Array.from(
-            { length: 1 + (Number(guestDetails?.coGuestCount) || 0) },
-            () => ({ qrCodeNumber: String(requestId) }),
-          );
+  if (mealDetails.length === 0) {
+    throw new Error("No QR codes available for this guest booking.");
+  }
 
-    console.log(
-      `[printService] Printing ${tickets.length} guest ticket(s) for requestId: ${requestId}`,
-    );
+  console.log(
+    `[printService] Building ${mealDetails.length} guest ticket(s) in parallel for requestId: ${requestId} [lang: ${lang}]`,
+  );
 
-    for (const { qrCodeNumber } of tickets) {
-      const html = await buildGuestTicketHtml({
+  // OPTIMISATION: Build all guest ticket HTMLs in parallel
+  const htmlList = await Promise.all(
+    mealDetails.map((meal) => {
+      const qrCodeNumber = String(meal.questQrCode);
+
+      // mealName arrives as comma-separated multilingual string:
+      // "Non-veg meal,मांसाहारी,मांसाहार"  → [en, hi, mr]
+      const mealNameParts = (meal.mealName ?? "Special Veg Meal")
+        .split(",")
+        .map((s) => s.trim());
+
+      const itemName = mealNameParts[0] ?? "Special Veg Meal";
+      const itemNameLocalized =
+        lang === "hi"
+          ? (mealNameParts[1] ?? itemName)
+          : lang === "mr"
+            ? (mealNameParts[2] ?? itemName)
+            : itemName;
+
+      return buildGuestTicketHtml({
         requestId,
         guestDetails,
         hostDetails,
-        itemName: "Special Veg Meal",
-        qrCodeNumber, // ← real 16-digit QR from backend, or requestId as fallback
+        itemName,
+        itemNameLocalized,
+        qrCodeNumber,
+        lang,
       });
-      await print({ html });
-    }
+    }),
+  );
 
-    console.log("[printService] All guest tickets printed successfully.");
-  } catch (err) {
-    console.error("[printService] Failed to build or print guest ticket:", err);
-    throw err; // re-throw so GuestPage can show the error
+  console.log(`[printService] Printing ${htmlList.length} guest ticket(s)...`);
+
+  for (const html of htmlList) {
+    await print({ html });
   }
+
+  console.log("[printService] All guest tickets printed successfully.");
 };
 
 // ─── createAndPrintBulkTicket (Contractor) ───────────────────────────────────
@@ -107,6 +151,7 @@ export const createAndPrintBulkTicket = async ({
   items,
   print,
   bookingResult,
+  lang = "en",
 }) => {
   try {
     const expandedItems = [];
@@ -117,7 +162,8 @@ export const createAndPrintBulkTicket = async ({
           (i) => String(i.id) === String(booking.menuId),
         );
         expandedItems.push({
-          itemName: resolveItemName(matchedItem),
+          itemName: resolveEnglishName(matchedItem),
+          itemNameLocalized: resolveLocalizedName(matchedItem, lang),
           qrCodeNumber: booking.qrCodeNumber,
         });
       }
@@ -126,7 +172,8 @@ export const createAndPrintBulkTicket = async ({
         const qty = Number(item.quantity) || 1;
         for (let i = 0; i < qty; i++) {
           expandedItems.push({
-            itemName: resolveItemName(item),
+            itemName: resolveEnglishName(item),
+            itemNameLocalized: resolveLocalizedName(item, lang),
             qrCodeNumber: undefined,
           });
         }
@@ -134,15 +181,25 @@ export const createAndPrintBulkTicket = async ({
     }
 
     console.log(
-      `[printService] Printing ${expandedItems.length} bulk ticket(s)`,
+      `[printService] Building ${expandedItems.length} bulk ticket(s) in parallel [lang: ${lang}]`,
     );
 
-    for (const { itemName, qrCodeNumber } of expandedItems) {
-      const html = await buildBulkTicketHtml({
-        contractorName,
-        itemName,
-        qrCodeNumber,
-      });
+    // OPTIMISATION: Build all bulk ticket HTMLs in parallel
+    const htmlList = await Promise.all(
+      expandedItems.map(({ itemName, itemNameLocalized, qrCodeNumber }) =>
+        buildBulkTicketHtml({
+          contractorName,
+          itemName,
+          itemNameLocalized,
+          qrCodeNumber,
+          lang,
+        }),
+      ),
+    );
+
+    console.log(`[printService] Printing ${htmlList.length} bulk ticket(s)...`);
+
+    for (const html of htmlList) {
       await print({ html });
     }
 

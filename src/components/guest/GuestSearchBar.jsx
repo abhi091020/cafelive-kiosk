@@ -164,7 +164,7 @@ const GuestSearchBar = ({
           font-size: clamp(13px, 1.4vw, 16px);
           color: #333;
           background: transparent;
-          font-family: inherit;
+          font-family: 'Montserrat', sans-serif;
           min-width: 0;
           cursor: text;
         }
@@ -221,6 +221,7 @@ const GuestSearchBar = ({
           -webkit-tap-highlight-color: transparent;
           transition: transform 0.1s ease, opacity 0.1s ease;
           letter-spacing: 0.02em;
+          font-family: 'Montserrat', sans-serif;
         }
 
         .guest-numpad-cancel {
@@ -237,6 +238,7 @@ const GuestSearchBar = ({
           -webkit-tap-highlight-color: transparent;
           transition: transform 0.1s ease, opacity 0.1s ease;
           letter-spacing: 0.02em;
+           font-family: 'Montserrat', sans-serif;
         }
       `}</style>
     </>

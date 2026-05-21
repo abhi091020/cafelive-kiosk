@@ -1,8 +1,18 @@
 // src/components/employee-booking/EmployeeIdCard.jsx
+import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 
 const EmployeeIdCard = ({ value }) => {
   const { t } = useTranslation();
+  const [cursorVisible, setCursorVisible] = useState(true);
+
+  // ── Blink cursor every 500ms ─────────────────────────────────────────────
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCursorVisible((v) => !v);
+    }, 500);
+    return () => clearInterval(interval);
+  }, []);
 
   return (
     <div
@@ -36,11 +46,11 @@ const EmployeeIdCard = ({ value }) => {
           boxSizing: "border-box",
           padding: "clamp(0.7vh, 1vh, 1.4vh) clamp(1.2vw, 1.8vw, 2vw)",
           background: "#F9F9F9",
-          border: "1px solid rgba(0,0,0,0.10)",
+          border: "1.5px solid #EA4D4E",
           borderRadius: "clamp(6px, 0.8vw, 10px)",
           fontSize: "clamp(1.4rem, 2.2vw, 2rem)",
           fontWeight: 400,
-          color: value ? "#1a1a1a" : "#aaaaaa",
+          color: "#1a1a1a",
           minHeight: "clamp(58px, 7.5vh, 80px)",
           display: "flex",
           alignItems: "center",
@@ -48,7 +58,19 @@ const EmployeeIdCard = ({ value }) => {
           letterSpacing: "0.12em",
         }}
       >
-        {value || ""}
+        {/* Value + blinking cursor */}
+        <span>{value}</span>
+        <span
+          style={{
+            display: "inline-block",
+            width: "2px",
+            height: "clamp(1.2rem, 2vw, 1.8rem)",
+            backgroundColor: "#EA4D4E",
+            marginLeft: "3px",
+            opacity: cursorVisible ? 1 : 0,
+            transition: "opacity 0.1s",
+          }}
+        />
       </div>
     </div>
   );

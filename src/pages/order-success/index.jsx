@@ -1,21 +1,21 @@
 // src/pages/order-success/index.jsx
 //
 // Features:
-//  • Triggers silent QR print on mount — one ticket per item unit
-//    e.g. [Coffee x2, Tea x3] → prints 5 tickets silently in background
 //  • Big illustration (78vw, max 860px)
 //  • CSS confetti burst on mount
 //  • Pulse glow ring behind image
 //  • Gradient success text overlaid on bottom of image
 //  • 3-second countdown → redirect to "/login"
+//
+// NOTE: Printing is NOT done here. It happens in menu/index.jsx (handleConfirmYes)
+// before navigation — same pattern as bulk-booking. State passed via navigate()
+// is kept for display purposes only.
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { Header, Footer } from "@common";
 import orderCompleteImg from "@assets/ordersuccess2.png";
-import usePrint from "@hooks/usePrint";
-import { createAndPrintTicket } from "@services/print/printService";
 
 // ─── Confetti piece component ─────────────────────────────────────────────────
 const CONFETTI_COLORS = [
@@ -60,43 +60,10 @@ const generateConfetti = (count = 60) =>
 // ─── OrderSuccessPage ─────────────────────────────────────────────────────────
 const OrderSuccessPage = () => {
   const navigate = useNavigate();
-  const location = useLocation();
   const { t } = useTranslation();
-  const { print } = usePrint();
-
-  // ── Data passed from the booking page via navigate(state) ──────────────
-  const user = location.state?.user || null;
-  const items = location.state?.items || [];
-  const shift = location.state?.shift || "";
-
-  // bookingResult from API is: { result: [{ bookingId, qrCodeNumber, ... }] }
-  // menu/index.jsx passes `response.result` which is the array itself.
-  // ✅ Safely extract qrCodeNumber from index [0] whether it's an array or object.
-  const bookingResult = location.state?.bookingResult ?? null;
-  const qrCodeNumber = Array.isArray(bookingResult)
-    ? (bookingResult[0]?.qrCodeNumber ?? null)
-    : (bookingResult?.qrCodeNumber ?? null);
 
   const [countdown, setCountdown] = useState(3);
   const [confetti] = useState(() => generateConfetti(70));
-
-  // Guard so printing runs only once even under StrictMode double-invoke
-  const hasPrinted = useRef(false);
-
-  // ── Silent print on mount ───────────────────────────────────────────────
-  useEffect(() => {
-    if (hasPrinted.current) return;
-    if (!user || items.length === 0) return;
-
-    hasPrinted.current = true;
-
-    console.log("[OrderSuccessPage] qrCodeNumber →", qrCodeNumber);
-
-    // ✅ Pass qrCodeNumber — QR will encode only this number (e.g. "31504202611000968281")
-    createAndPrintTicket({ user, items, shift, print, qrCodeNumber }).catch(
-      (err) => console.error("[OrderSuccessPage] Print error:", err),
-    );
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── Countdown → redirect ────────────────────────────────────────────────
   useEffect(() => {
@@ -189,7 +156,8 @@ const OrderSuccessPage = () => {
               right: 0,
               margin: 0,
               fontSize: "clamp(1.9rem, 5.5vw, 3rem)",
-              fontWeight: 800,
+              fontWeight: 600, // ← was 800, now 600 (SemiBold)
+              fontFamily: "'Poppins', sans-serif", // ← add
               lineHeight: 1.28,
               textAlign: "center",
               background: "linear-gradient(90deg, #860606 0%, #EA4D4E 100%)",
@@ -210,6 +178,8 @@ const OrderSuccessPage = () => {
           style={{
             margin: 0,
             fontSize: "1.05rem",
+            fontWeight: 600, // ← add
+            fontFamily: "'Poppins', sans-serif", // ← add
             color: "#9CA3AF",
             animation: "fadeUp 0.5s 0.45s ease both",
             zIndex: 1,

@@ -15,6 +15,7 @@ const Footer = () => {
         padding: "clamp(0.8vh, 1.0vh, 1.2vh) clamp(4vw, 5.0vw, 6vw)",
         boxSizing: "border-box",
         zIndex: 10,
+        fontFamily: "'Montserrat', sans-serif",
       }}
     >
       <p
